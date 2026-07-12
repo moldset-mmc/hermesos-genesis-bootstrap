@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test runner
+        run: python -m pip install pytest
+      - name: Secret and generated-state gate
+        run: python scripts/release.py scan
+      - name: Verify integrated Source Bundle
+        run: python scripts/release.py verify-source
+      - name: Compile source
+        run: python -m py_compile scripts/release.py scripts/clean_install.py bootstrap/bootstrap_engine/genesis_bootstrap_v2.py bootstrap/bootstrap_engine/genesis_bootstrap.py
+      - name: Run tests
+        run: python -m pytest tests -q
+      - name: Build deterministic release artifact
+        run: python scripts/release.py build --out dist --version 0.2
+      - name: Verify release package and checksums
+        run: python scripts/release.py verify-release --archive dist/HERMESOS_GENESIS_RC_v0.2.zip

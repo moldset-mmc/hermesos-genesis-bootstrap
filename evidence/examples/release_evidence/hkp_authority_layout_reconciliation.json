@@ -1,0 +1,23 @@
+{
+  "schema": "hermesos.genesis.evidence.v0.1",
+  "timestamp_utc": "2026-07-12T00:00:00Z",
+  "phase": "HKP_AUTHORITY_LAYOUT_RECONCILIATION",
+  "target": "owner-bound authoritative HKP root interface",
+  "inputs": {
+    "authority_root_examined": "E:/HKP",
+    "components": ["hkp_boot_probe.py", "governance_status.py", "hkp_policy_gate.py", "Hermes_Gateway.cmd.template", "host bindings", "minimum corpus"],
+    "source_references": ["E:/HKP/HKP_INTEGRITY_MANIFEST_v1.3.json", "E:/HKP/HKP_INTEGRITY_MANIFEST_v6.0.json", "E:/HKP/DOCUMENT_REGISTRY.md", "E:/HKP/Operating Layer/HKP_PRODUCTION_BASELINE_RC2_6.md"]
+  },
+  "findings": [
+    {"component": "hkp_boot_probe.py", "classification": "EXPECTED", "expected_manifest": "HKP_INTEGRITY_MANIFEST_v6.0.json", "manifest_id": "HKP-INT-006", "source_count": 33},
+    {"component": "governance_status.py", "classification": "STALE_IMPLEMENTATION", "observed_manifest": "HKP_INTEGRITY_MANIFEST_v1.3.json", "observed_manifest_id": "HKP-INT-004", "implementation_correction": "runtime_corrections/gateway/governance_status.py"},
+    {"component": "hkp_policy_gate.py", "classification": "EXPECTED", "required_policy": "Specification Layer/HKP_ACTION_POLICY_STATE_v1.0.json"},
+    {"component": "minimum_corpus", "classification": "EXPECTED", "reason": "bootstrap dependency corpus only; it is not an authority root"},
+    {"component": "HKP_INTEGRITY_MANIFEST_v1.3.json", "classification": "LEGACY_COMPATIBILITY", "manifest_id": "HKP-INT-004", "baseline": "HKP-BSL-001 / RC2.1", "source_count": 18},
+    {"component": "HKP_INTEGRITY_MANIFEST_v6.0.json", "classification": "EXPECTED", "manifest_id": "HKP-INT-006", "baseline": "HKP-BSL-006 / RC2.6", "source_count": 33, "sha256": "964fd2e5420537d30dc64de8fd1dc0854065aaff5d68eb856e0b3434d4ded7aa"}
+  ],
+  "manifest_version_conflict": "EXPLAINED",
+  "result": "COMPATIBLE_AFTER_IMPLEMENTATION_CORRECTION",
+  "verification_level": "SOURCE_VERIFIED",
+  "failure_details": []
+}

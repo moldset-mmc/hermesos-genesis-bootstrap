@@ -1,0 +1,20 @@
+{
+  "GENESIS_PACKAGE_ROOT": "<OWNER_PROVIDED_PACKAGE_ROOT>",
+  "HKP_CANONICAL_ROOT": "<OWNER_PROVIDED_AUTHORITATIVE_HKP_ROOT>",
+  "HKP_EVIDENCE_ROOT": "<HOST_EVIDENCE_ROOT>",
+  "HKP_POLICY_ROOT": "<AUTHORITATIVE_POLICY_ROOT>",
+  "HERMES_HOME": "<HERMES_HOME>",
+  "HERMES_PROFILE_ROOT": "<HERMES_HOME>/profiles",
+  "HERMES_RUNTIME_ROOT": "<DISPOSABLE_OR_APPROVED_RUNTIME_ROOT>",
+  "PROJECT_WORKSPACE_ROOT": "<PROJECT_IMPLEMENTATION_WORKSPACE>",
+  "LIVE_TARGET": false,
+  "secret_references": {
+    "OPENROUTER_API_KEY": "env:OPENROUTER_API_KEY",
+    "TELEGRAM_BOT_TOKEN_ASSISTANT": "env:TELEGRAM_BOT_TOKEN_ASSISTANT"
+  },
+  "corpus_binding": {
+    "bootstrap_minimum_corpus": "<PACKAGE>/02_HKP_GOVERNANCE/minimum_corpus",
+    "owner_bound_authoritative_hkp_root_required": true,
+    "required_integrity_manifest": "HKP_INTEGRITY_MANIFEST_v6.0.json"
+  }
+}

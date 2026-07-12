@@ -1,0 +1,23 @@
+{
+  "schema": "hermesos.genesis.evidence.v0.1",
+  "timestamp_utc": "2026-07-12T00:00:00Z",
+  "phase": "BOOT_PROBE_LAYOUT_RECONCILIATION",
+  "target": "implementation package only",
+  "inputs": [
+    "Source Bundle 06_GATEWAY_SCRIPTS/Hermes_Gateway.cmd.template",
+    "Source Bundle 03_NEW_RUNTIME_FILES/scripts/hkp_boot_probe.py",
+    "Design Pack DP-03 and DP-09",
+    "implementation installation_manifest.json and genesis_bootstrap.py"
+  ],
+  "finding": {
+    "classification": "HOST_BINDING",
+    "deployment_mapping": "HERMES_HOME/scripts/hkp_boot_probe.py",
+    "deployment_class": "HERMES_HOME_RUNTIME_SUPPORT",
+    "decision": "B",
+    "reason": "The gateway template resolves HKP_PROBE from %HERMES_HOME%\\scripts\\hkp_boot_probe.py and the probe writes state/evidence under HERMES_HOME. No opened normative source supports placing the probe in the shared upstream runtime root."
+  },
+  "action": "implementation package mapping corrected; Source Bundle unchanged",
+  "result": "RESOLVED",
+  "verification_level": "IMPLEMENTATION_VERIFIED",
+  "failure_details": []
+}

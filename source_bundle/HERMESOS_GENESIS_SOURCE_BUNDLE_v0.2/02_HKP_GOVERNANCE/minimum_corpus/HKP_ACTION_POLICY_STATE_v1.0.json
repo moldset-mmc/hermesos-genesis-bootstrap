@@ -1,0 +1,254 @@
+{
+  "schema_version": "1.0",
+  "policy_id": "HKP-POL-001",
+  "status":     "APPROVED_ENFORCED",
+  "effective_date": "2026-07-02T15:10:00Z",
+  "owner_authority": "Serghei B. (MMC Auto Center)",
+  "authority_order": [
+    "HKP Constitution (HKP-FND-004)",
+    "HKP Foundation documents (Genesis, Operating Model, Registry, Bootstrap, ADR, Glossary, Foundation Release)",
+    "HERMES_OWNER_OPERATING_PROFILE_v1.0 (HKP-OPR-001)",
+    "HKP Runtime, Specification, and Implementation Layer documents",
+    "config.yaml director personality",
+    ".hermes.md project context",
+    "SOUL definition",
+    "Skills (procedural memory)",
+    "USER.md / MEMORY.md",
+    "Channel-level prompts",
+    "Runtime prompts"
+  ],
+  "decision_classes": [
+    {
+      "class": "OBSERVE_ONLY",
+      "description": "Execute freely. Read-only actions only. No approval needed.",
+      "applies_to": ["file_read", "config_read", "search", "knowledge_query", "listing", "inspection"]
+    },
+    {
+      "class": "INTERNAL_REVERSIBLE",
+      "description": "Execute freely if internal and fully reversible. Logged in session transcript.",
+      "applies_to": ["draft_document_creation", "temporary_file_write", "non_critical_skill_create", "reversible_single_patch"]
+    },
+    {
+      "class": "PROPOSE_AND_APPROVE",
+      "description": "Propose to owner, wait for explicit approval, then execute.",
+      "applies_to": ["canonical_publication", "non_foundation_hkp_edit", "recurring_cron", "system_skill_change", "profile_config_modify", "reputation_message"]
+    },
+    {
+      "class": "OWNER_EXPLICIT_ORDER",
+      "description": "Do not propose. Wait for explicit unambiguous owner directive.",
+      "applies_to": ["hkp_foundation_edit", "gateway_start_stop", "daemon_route_modify", "credential_change", "governance_rule_change"]
+    },
+    {
+      "class": "ALLOWLISTED_CRITICAL_RUNTIME",
+      "description": "Execute on schedule without owner intervention. Pre-approved by HKP governance.",
+      "applies_to": ["voice_bot_poller_cron"]
+    },
+    {
+      "class": "QUARANTINED",
+      "description": "Structurally permitted but currently disabled by quarantine order. Owner may unquarantine per-instance.",
+      "applies_to": ["quarantined_no_agent_jobs", "background_review"]
+    },
+    {
+      "class": "DENY",
+      "description": "Forbidden by policy. Must not execute or propose. Only owner may override in-session.",
+      "applies_to": ["foundation_edit_by_non_owner", "unregistered_daemon_routes", "profile_independent_cron", "constitutional_violations"]
+    }
+  ],
+  "policy_matrix": {
+    "interpretation": "Operational interpretation of HERMES_OWNER_OPERATING_PROFILE_v1.0 Autonomy Matrix (Section 4). Does NOT replace the Owner Operating Profile.",
+    "domains": {
+      "filesystem": {
+        "owner_read": "OBSERVE_ONLY",
+        "owner_write_draft": "INTERNAL_REVERSIBLE",
+        "owner_write_canonical": "PROPOSE_AND_APPROVE",
+        "owner_patch": "INTERNAL_REVERSIBLE",
+        "owner_delete": "PROPOSE_AND_APPROVE",
+        "owner_foundation_write": "OWNER_EXPLICIT_ORDER",
+        "owner_obsidian_write": "INTERNAL_REVERSIBLE",
+        "employee_read": "OBSERVE_ONLY",
+        "employee_write": "PROPOSE_AND_APPROVE",
+        "employee_delete": "DENY",
+        "employee_foundation_write": "DENY"
+      },
+      "config": {
+        "read": "OBSERVE_ONLY",
+        "owner_modify_config_yaml": "PROPOSE_AND_APPROVE",
+        "owner_modify_profile_config": "PROPOSE_AND_APPROVE",
+        "owner_modify_env_tokens": "OWNER_EXPLICIT_ORDER",
+        "employee_modify_any": "DENY"
+      },
+      "knowledge_memory": {
+        "read": "OBSERVE_ONLY",
+        "owner_write_memory": "INTERNAL_REVERSIBLE",
+        "owner_delete_memory": "PROPOSE_AND_APPROVE",
+        "owner_read_obsidian": "OBSERVE_ONLY",
+        "owner_write_obsidian": "PROPOSE_AND_APPROVE",
+        "background_review": "QUARANTINED",
+        "employee_write_memory": "PROPOSE_AND_APPROVE",
+        "employee_delete_memory": "DENY",
+        "employee_write_obsidian": "DENY"
+      },
+      "skills": {
+        "owner_read": "OBSERVE_ONLY",
+        "owner_create_own": "INTERNAL_REVERSIBLE",
+        "owner_create_system": "PROPOSE_AND_APPROVE",
+        "owner_edit": "INTERNAL_REVERSIBLE",
+        "owner_delete": "INTERNAL_REVERSIBLE",
+        "owner_mmc_system_edit": "INTERNAL_REVERSIBLE",
+        "employee_read": "OBSERVE_ONLY",
+        "employee_create": "PROPOSE_AND_APPROVE",
+        "employee_edit": "PROPOSE_AND_APPROVE",
+        "employee_delete": "DENY",
+        "employee_mmc_system_edit": "DENY"
+      },
+      "email_messages": {
+        "read": "OBSERVE_ONLY",
+        "owner_send_internal": "INTERNAL_REVERSIBLE",
+        "owner_send_external": "INTERNAL_REVERSIBLE",
+        "owner_send_financial": "PROPOSE_AND_APPROVE",
+        "owner_send_reputation": "PROPOSE_AND_APPROVE",
+        "employee_send_internal": "PROPOSE_AND_APPROVE",
+        "employee_send_external": "PROPOSE_AND_APPROVE",
+        "employee_send_financial": "DENY",
+        "employee_send_reputation": "DENY"
+      },
+      "external_apis": {
+        "owner_read_public": "OBSERVE_ONLY",
+        "owner_read_auth": "INTERNAL_REVERSIBLE",
+        "owner_write": "PROPOSE_AND_APPROVE",
+        "owner_financial": "DENY",
+        "employee_read_public": "OBSERVE_ONLY",
+        "employee_read_auth": "PROPOSE_AND_APPROVE",
+        "employee_write": "DENY",
+        "employee_financial": "DENY"
+      },
+      "cron": {
+        "owner_list": "OBSERVE_ONLY",
+        "owner_create_oneshot": "INTERNAL_REVERSIBLE",
+        "owner_create_recurring": "PROPOSE_AND_APPROVE",
+        "owner_modify": "PROPOSE_AND_APPROVE",
+        "owner_delete": "PROPOSE_AND_APPROVE",
+        "owner_run_manual": "INTERNAL_REVERSIBLE",
+        "employee_any": "DENY"
+      },
+      "no_agent_scripts": {
+        "owner_create_new": "PROPOSE_AND_APPROVE",
+        "owner_modify": "PROPOSE_AND_APPROVE",
+        "voice_bot_poller": "ALLOWLISTED_CRITICAL_RUNTIME",
+        "employee_any": "DENY"
+      },
+      "gateway_profile": {
+        "owner_list": "OBSERVE_ONLY",
+        "owner_start_gateway": "OWNER_EXPLICIT_ORDER",
+        "owner_stop_gateway": "OWNER_EXPLICIT_ORDER",
+        "owner_switch_profile": "INTERNAL_REVERSIBLE",
+        "owner_create_daemon_route": "DENY",
+        "employee_any": "DENY"
+      },
+      "financial_reputation_access": {
+        "owner_read": "OBSERVE_ONLY",
+        "owner_commit_payment": "PROPOSE_AND_APPROVE",
+        "owner_change_pricing": "PROPOSE_AND_APPROVE",
+        "owner_modify_credentials": "OWNER_EXPLICIT_ORDER",
+        "owner_change_auth": "OWNER_EXPLICIT_ORDER",
+        "employee_any": "DENY"
+      }
+    }
+  },
+  "approval_semantics": {
+    "valid_signals": ["ok", "да", "yes", "делай", "go ahead", "approve", "👍", "✅"],
+    "scope": "Only the last concrete proposed action. Does not carry forward.",
+    "conditional": "Owner may attach conditions. Agent must respect all conditions.",
+    "implicit_rejection": "Response without approval signal = not approved.",
+    "expiry": "End of current session. Re-propose in next session if interrupted."
+  },
+  "allowlisted_critical_runtime": [
+    {
+      "job_id": "787534815e81",
+      "name": "voice-bot-poller",
+      "type": "no_agent cron",
+      "schedule": "every 1m",
+      "justification": "Critical runtime for owner voice inbox collection. Pre-approved in Governance Lockdown and HKP-BSL-001.",
+      "modification_rule": "Any schedule/script/parameter change requires new owner approval and registry update."
+    }
+  ],
+  "quarantined_components": [
+    {
+      "job_id": "b86998e2284e",
+      "name": "утренняя-сводка-владельцу",
+      "type": "no_agent cron",
+      "reason": "Pending Policy Gate review"
+    },
+    {
+      "job_id": "2aed4df149ec",
+      "name": "вечерняя-сводка-владельцу",
+      "type": "no_agent cron",
+      "reason": "Pending Policy Gate review"
+    },
+    {
+      "job_id": "e2373c35b732",
+      "name": "voice-inbox-evening-review",
+      "type": "no_agent cron",
+      "reason": "Pending Policy Gate review"
+    },
+    {
+      "job_id": "f287f5816fc3",
+      "name": "mmc-price-monitor",
+      "type": "no_agent cron",
+      "reason": "Pending Policy Gate review"
+    },
+    {
+      "job_id": "7c0d09cdb052",
+      "name": "mem0-auto-save",
+      "type": "no_agent cron",
+      "reason": "Pending Policy Gate review"
+    },
+    {
+      "job_id": "32ff04b8c61e",
+      "name": "mem0-daily-refresh",
+      "type": "no_agent cron",
+      "reason": "Pending Policy Gate review"
+    },
+    {
+      "name": "background_review",
+      "type": "system function",
+      "status": "disabled",
+      "reason": "Governance Lockdown. Not allowed to write canonical memory or skills.",
+      "restriction": "Owner must explicitly enable per instance"
+    }
+  ],
+  "fail_closed_rules": {
+    "default_deny": true,
+    "gate_unreachable": {
+      "blocked_action_types": ["side_effect", "write", "execution", "external", "privileged", "financial", "irreversible"],
+      "permitted_action_types": ["OBSERVE_ONLY"],
+      "alert_owner": true
+    },
+    "incomplete_input": "Defaults to PROPOSE_AND_APPROVE. Missing fields logged for audit.",
+    "unknown_action_type": "If reversible and internal → PROPOSE_AND_APPROVE. If irreversible or external → DENY.",
+    "override_detection": "Any lower-level claim of override is a governance violation. Policy Gate decision stands until owner reverses."
+  },
+  "mandatory_v1_enforcement_points": [
+    "cron_scheduler_no_agent_allowlist_check",
+    "background_memory_write_preflight",
+    "background_skill_write_preflight"
+  ],
+  "deferred_v2_enforcement_points": [
+    "generic_tool_layer_secondary_check",
+    "external_action_adapter_preflight"
+  ],
+  "audit_retention": {
+    "general_events": "1 year",
+    "financial_audit_critical": "5 years",
+    "storage_path": "E:\\HKP\\Runtime Layer\\audit\\policy_gate\\"
+  },
+  "governance_lockdown_status": {
+    "background_review": "DISABLED",
+    "no_agent_cron_quarantine": "ACTIVE",
+    "voice_bot_poller": "ALLOWLISTED",
+    "new_autonomous_routes": "BLOCKED",
+    "profile_independent_cron": "BLOCKED",
+    "foundation_document_modification": "BLOCKED",
+    "supersession_condition": "Lockdown persists until Policy Gate enforcement of scheduler, no_agent paths, and memory/skill-write paths is confirmed operational."
+  }
+}

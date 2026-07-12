@@ -1,0 +1,12 @@
+HermesOS Genesis is an independent integration and bootstrap project.
+
+This repository contains HermesOS/HKP additions and metadata alongside
+upstream-derived patch context for Hermes Agent. Hermes Agent is an upstream
+project of Nous Research. Upstream code, copyrights, and MIT license notices
+remain the property of their respective authors and must be preserved.
+
+HermesOS Genesis does not claim ownership of Hermes Agent or Nous Research
+upstream code. The `bootstrap/` and `source_bundle/` materials identify
+upstream-derived content through their manifests, provenance records, and
+patch paths. HermesOS/HKP-specific additions are identified as custom runtime
+files, bootstrap tooling, and project documentation.

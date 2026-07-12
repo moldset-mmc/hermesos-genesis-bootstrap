@@ -1,0 +1,13 @@
+# TASKS — HermesOs. Отдельный реестр задач (НЕ Honcho observations).
+version: 1
+tasks: []
+# schema: {task_id, project_id, description, due_at, recurrence, status, source, owner, evidence}
+  - task_id: def-001
+    project_id: hermes-infrastructure
+    description: "NON-FATAL DEFECT: agent/background_review.py uses thread_scoped_silence() (lines 615/618/857) but name is undefined in scope -> фоновый memory/skill review падает с NameError. Не критично (только фоновый обзор). НЕ чинить сейчас — backlog."
+    due_at: null
+    recurrence: null
+    status: OPEN
+    source: "mojibake-fix session 2026-07-11"
+    owner: serghei
+    evidence: "agent.log: Background memory/skill review failed: name 'thread_scoped_silence' is not defined"

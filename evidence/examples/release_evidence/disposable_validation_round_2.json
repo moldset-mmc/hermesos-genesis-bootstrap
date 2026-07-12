@@ -1,0 +1,20 @@
+{
+  "schema": "hermesos.genesis.evidence.v0.1",
+  "timestamp_utc": "2026-07-11T21:28:42.840791+00:00",
+  "phase": "DISPOSABLE_VALIDATION_ROUND_2",
+  "target": "workspace/reconstruction-adapted + workspace/disposable-hermes-home",
+  "checks": {
+    "pytest_bootstrap_contract": "PASS",
+    "plan": "PASS",
+    "status": "PASS",
+    "rollback": "PASS",
+    "final_runtime_git_status_porcelain": "EMPTY"
+  },
+  "result": "PASS",
+  "verification_level": "DISPOSABLE_VERIFIED",
+  "claims_prohibited": [
+    "LIVE VERIFIED",
+    "ISOLATION VERIFIED",
+    "READY"
+  ]
+}

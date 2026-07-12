@@ -1,0 +1,52 @@
+{
+  "schema": "hermesos.genesis.installation-manifest.v0.2",
+  "revision": "integrated-governance-status-1",
+  "upstream": {
+    "repository": "https://github.com/NousResearch/hermes-agent.git",
+    "pinned_commit": "cd124ad1fae574dcdab8124924f84201d65277da",
+    "package_baseline": "hermes-agent==0.18.0",
+    "python": ">=3.11"
+  },
+  "patch": {
+    "source": "04_MODIFIED_UPSTREAM_PATCHES/001_all_upstream_modifications.patch",
+    "apply_command": "git apply -p0 --check <patch>; git apply -p0 <patch>",
+    "affected_upstream_paths": [
+      "agent/background_review.py", "agent/credential_pool.py", "agent/tool_dispatch_helpers.py", "agent/tool_executor.py",
+      "cron/scheduler.py", "gateway/delivery.py", "gateway/platforms/api_server.py", "gateway/run.py",
+      "plugins/platforms/telegram/adapter.py", "tools/cronjob_tools.py", "tools/delegate_tool.py", "tools/file_tools.py",
+      "tools/memory_tool.py", "tools/skill_manager_tool.py", "tools/terminal_tool.py"
+    ]
+  },
+  "custom_runtime_files": {
+    "agent": [
+      "approval_service.py", "credential_broker.py", "credential_broker_client.py", "credential_broker_service.py", "execution_context.py", "hermes_core_startup.py", "hkp_binding.py", "hkp_enforcer.py", "hkp_policy_gate.py", "hkp_prompt_guard.py", "tool_preflight.py"
+    ],
+    "gateway": ["governance_status.py"],
+    "hkp_package_source": "hkp/hkp/",
+    "hkp_package_destination": "<runtime-root>/hkp/hkp/"
+  },
+  "runtime_support": {
+    "boot_probe": {
+      "source": "03_NEW_RUNTIME_FILES/scripts/hkp_boot_probe.py",
+      "destination": "<HERMES_HOME>/scripts/hkp_boot_probe.py",
+      "deployment_class": "HERMES_HOME_RUNTIME_SUPPORT",
+      "normative_basis": "Gateway template invokes %HERMES_HOME%\\scripts\\hkp_boot_probe.py before gateway start",
+      "rollback_scope": "remove only <HERMES_HOME>/scripts/hkp_boot_probe.py created by this apply"
+    }
+  },
+  "runtime_source_mode": "INTEGRATED",
+  "historical_rc_v0_1_overlay": {
+    "classification": "KEEP_AS_IMPLEMENTATION_OVERLAY",
+    "provenance": "source_bundle/HERMESOS_GENESIS_SOURCE_BUNDLE_v0.1/09_BUNDLE_METADATA/DISCREPANCIES.md",
+    "disposition": "Integrated directly into HERMESOS_GENESIS_SOURCE_BUNDLE_v0.2; not used by next-release APPLY."
+  },
+  "profile_artifacts": ["SOUL.md", "MEMORY.md", "USER.md", "PROJECT_REGISTRY.yaml", "CONNECTOR_REGISTRY.yaml", "tasks.yaml", "config.yaml"],
+  "preserve": [".env", "auth.json", "state.db", "sessions/", "cron/", "owner-bound authoritative HKP corpus"],
+  "governance_binding": {
+    "bootstrap_minimum_corpus_is_not_authoritative_root": true,
+    "owner_bound_authoritative_hkp_root_required": true,
+    "authoritative_integrity_manifest": "HKP_INTEGRITY_MANIFEST_v6.0.json",
+    "authoritative_integrity_manifest_id": "HKP-INT-006",
+    "authoritative_integrity_manifest_schema": "1.0"
+  }
+}

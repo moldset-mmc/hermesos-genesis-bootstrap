@@ -1,0 +1,208 @@
+{
+  "schema_version": "1.0",
+  "manifest_id": "HKP-INT-006",
+  "supersedes": "HKP-INT-005",
+  "generated_at_utc": "2026-07-04",
+  "algorithm": "SHA-256",
+  "baseline_reference": "HKP-BSL-006 / RC2.6",
+  "sources": [
+    {
+      "path": "README.md",
+      "sha256": "ec64a579d912d5fb430a27ff46a9e87a4d7fa9d14a7e98d5376f2b6ff3a4bbec",
+      "bytes": 3951,
+      "category": "root_control"
+    },
+    {
+      "path": "HKP_INDEX.md",
+      "sha256": "f0e6d04108914d6d7a5adfe364077e55d6497533daee64ea9e0e507f175c0e8a",
+      "bytes": 8470,
+      "category": "root_control"
+    },
+    {
+      "path": "DOCUMENT_REGISTRY.md",
+      "sha256": "d0412b38abbaa82518119f3a973040717a72bd18f4a5062ed8ad7aa87923e038",
+      "bytes": 17261,
+      "category": "root_control"
+    },
+    {
+      "path": "HKP_DEPENDENCY_MAP.md",
+      "sha256": "5e35b3978ef389c36ed5dba3b921ae6c8319ebc1fc272f642c94df1c14f7a064",
+      "bytes": 4951,
+      "category": "root_control"
+    },
+    {
+      "path": "HKP_AUDIT_REPORT.md",
+      "sha256": "a2ae52492441ead33bacbee7d20948d380e01fd27ac038292891cbeb52156bc4",
+      "bytes": 11653,
+      "category": "root_control"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/GENESIS_000.txt",
+      "sha256": "a29153364077f65e3e5636c851e60c7d74be4ab591ef1889b544a9fa71766778",
+      "bytes": 8265,
+      "category": "foundation"
+    },
+    {
+      "path": "HERMES_OS_CORE_FOUNDATION_INDEX_v1.0.txt",
+      "sha256": "365346d4ec07394c01b0e3dd89b0457ce0e9c0e0c63bec21393e10b644fa9cb3",
+      "bytes": 6929,
+      "category": "foundation"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/HERMES_GLOSSARY_v1.0.txt",
+      "sha256": "321485a21d3e05e206d4fbbff103cdb8e46644ed51a3b7959531bf3c7e7530ef",
+      "bytes": 8019,
+      "category": "foundation"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/HERMES_CORE_CONSTITUTION_v1.0.docx",
+      "sha256": "fad0042d1a7a859ecfb659b3a098ba3c03fef4b8946d5a9b5b2e47542abd5f0f",
+      "bytes": 47942,
+      "category": "foundation"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/HERMES_CORE_OPERATING_MODEL_v1.0.txt",
+      "sha256": "bcf807880f6d8b01d7a1b306c8da7edc70c2f5bc4ddea4aeb69f997f8f938db0",
+      "bytes": 10408,
+      "category": "foundation"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/HERMES_CORE_REGISTRY_v1.0.txt",
+      "sha256": "34e8d89356cd2c722949156e0108c0e1089fe5177042d3ec634bc5bc5179ef29",
+      "bytes": 8444,
+      "category": "foundation"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/HERMES_CORE_BOOTSTRAP_v1.0.txt",
+      "sha256": "65c5e65c357547804736e43b67914f2523014fd078c504ece6100ec6f84207e0",
+      "bytes": 9059,
+      "category": "foundation"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/HERMES_ARCHITECTURE_DECISIONS_v1.0.txt",
+      "sha256": "2ac61fbed91f14567ac395180744a48ad08c86282c2c33b124a20df4a4196902",
+      "bytes": 9062,
+      "category": "foundation"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/HERMES_ARCHITECTURE_DECISIONS_v1.1.txt",
+      "sha256": "8d7eea5ab8c750caee35b39f427cfb88697bc91ff5ca501312d2e8192af160be",
+      "bytes": 13059,
+      "category": "foundation"
+    },
+    {
+      "path": "01_Hermes_OS_Architectural_Level_1/HERMES_FOUNDATION_RELEASE_1.0_CANONICAL_RESOLUTION.docx",
+      "sha256": "b2f536d1dd7fc144cfbeccd0c213a297d0fb6a82e380166d25abeaeeeaff75c9",
+      "bytes": 37589,
+      "category": "foundation"
+    },
+    {
+      "path": "HERMES_OS_FOUNDATION_BOOK_v1.0.txt",
+      "sha256": "aece774ccc9a55e515ba2f43f5bbebfdd46067df5acee8c32805204952e1aa9e",
+      "bytes": 2588,
+      "category": "foundation"
+    },
+    {
+      "path": "HERMES_OS_CORE_FOUNDATION_INDEX_v1.0.txt",
+      "sha256": "365346d4ec07394c01b0e3dd89b0457ce0e9c0e0c63bec21393e10b644fa9cb3",
+      "bytes": 6929,
+      "category": "foundation"
+    },
+    {
+      "path": "Operating Layer/HERMES_OWNER_OPERATING_PROFILE_v1.0.md",
+      "sha256": "a5634874d93d9a78ea14f652f31b7a10c46fe5b579f7b54898f2339372ef4f8d",
+      "bytes": 14000,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/HKP_PRODUCTION_BASELINE_RC2_1.md",
+      "sha256": "92b7823471da7ff63b73ac8fe03908ccd4da26597701cad30e213fdd505fea30",
+      "bytes": 8231,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/HKP_PRODUCTION_BASELINE_RC2_2.md",
+      "sha256": "6a3b06bd6d8f95b86c027afe816dc9c27856170133382cafbd5c679051656e19",
+      "bytes": 5656,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/RUNTIME_v1.1_AUTHORING_CHARTER_v1.0.md",
+      "sha256": "c46c637a54d19f8fd4230eec949476ea48b17cac2bf65c5ef5f33833f665230a",
+      "bytes": 11097,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/HKP_PRODUCTION_BASELINE_RC2_3.md",
+      "sha256": "692cc303c9c566f97df7de4bb971d04977ee6895a62b0d0a477e7136146a2d7e",
+      "bytes": 6766,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/RUNTIME_v1.1_AUTHORING_CHARTER_v2.0.md",
+      "sha256": "4a5d1c5eafc3effa6b4046350357bd2957d2e7310d55fee37cf0a2a85641f115",
+      "bytes": 12906,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/BATCH_CONVERGENCE_ANNEX_v1.0.md",
+      "sha256": "4daac28dd9e54e1fb08ddbcae7050810e826200ef7162ae71ff86bb932851ecb",
+      "bytes": 10412,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/HKP_PRODUCTION_BASELINE_RC2_4.md",
+      "sha256": "fded593112de47c1dd4efaeea2183cc3d97abfca9787d6a68ade28c10838c22a",
+      "bytes": 8003,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/HKP_PRODUCTION_BASELINE_RC2_5.md",
+      "sha256": "d6470a2c2c5d8933f7491812c3eb677f112192688d86d5a28728fbf2e5cde832",
+      "bytes": 9050,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Operating Layer/HKP_PRODUCTION_BASELINE_RC2_6.md",
+      "sha256": "005e7727ef27c916dac44f72ec2e7442c90937400d8ec311eae5c036ffd28b88",
+      "bytes": 8472,
+      "category": "operating_layer"
+    },
+    {
+      "path": "Runtime Layer/_batch_convergence/HERMES_RUNTIME_MODEL_v1.1_CANONICAL.md",
+      "sha256": "b836f76c2b39fa46d32ef82657265e70c708e2cef631c49aee10924259eba0e6",
+      "bytes": 8228,
+      "category": "runtime_v1.1_canonical"
+    },
+    {
+      "path": "Runtime Layer/_batch_convergence/HERMES_MEMORY_MODEL_v1.1_CANONICAL.md",
+      "sha256": "e8f08ace1881389186154dfd9ec4f956675c8ca2914ee52fbde7ac8b55fade01",
+      "bytes": 6538,
+      "category": "runtime_v1.1_canonical"
+    },
+    {
+      "path": "Runtime Layer/_batch_convergence/HERMES_KNOWLEDGE_MODEL_v1.1_CANONICAL.md",
+      "sha256": "fcbb4f28d62697cefe07dbb20459a2b87b0b635348ebc050f7b711d7639a1b92",
+      "bytes": 6859,
+      "category": "runtime_v1.1_canonical"
+    },
+    {
+      "path": "Runtime Layer/_batch_convergence/HERMES_AGENT_MODEL_v1.1_CANONICAL.md",
+      "sha256": "77d0675535582d71a7f7230f8ece9853cd08de45877a5ce4fba53ea2e9c3a7dc",
+      "bytes": 6622,
+      "category": "runtime_v1.1_canonical"
+    },
+    {
+      "path": "Runtime Layer/_batch_convergence/HERMES_DECISION_MODEL_v1.1_CANONICAL.md",
+      "sha256": "7625415a4c81a240b15d7c194f8d0b42f44cd1e881a18637b369cf8a836c3cd8",
+      "bytes": 6817,
+      "category": "runtime_v1.1_canonical"
+    },
+    {
+      "path": "Runtime Layer/_batch_convergence/HERMES_SECURITY_MODEL_v1.1_CANONICAL.md",
+      "sha256": "b6a97352c6d45f3db03c915e76751834566e5f71e44f4792f5e6e6011973f394",
+      "bytes": 6587,
+      "category": "runtime_v1.1_canonical"
+    }
+  ]
+}

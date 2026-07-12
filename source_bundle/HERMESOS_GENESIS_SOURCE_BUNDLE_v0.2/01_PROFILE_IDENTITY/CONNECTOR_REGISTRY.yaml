@@ -1,0 +1,168 @@
+# CONNECTOR_REGISTRY — HermesOs. Секреты НЕ хранятся, только secret_reference.
+# VERIFIED = пройден безопасный health check. CONFIGURED != VERIFIED.
+version: 1
+last_inventory: "2026-07-11T13:00:00Z"
+connectors:
+  - connector_id: github
+    service: GitHub
+    status: VERIFIED
+    projects: [hermes-infrastructure, hermes-ai-office, content]
+    auth_method: token
+    secret_reference: "env:GITHUB_TOKEN"
+    supported_operations: [repo_read, repo_write, pr, issues, actions]
+    health_check: "GET api.github.com/user"
+    skill: github
+    last_success: "2026-07-11T13:00:00Z"
+    evidence: "login={GITHUB_ACCOUNT_LOGIN}"
+    failure_reason: null
+  - connector_id: openrouter
+    service: OpenRouter (LLM)
+    status: VERIFIED
+    projects: [hermes-infrastructure]
+    auth_method: api_key
+    secret_reference: "env:OPENROUTER_API_KEY"
+    supported_operations: [chat_completions, models_list]
+    health_check: "GET /api/v1/auth/key"
+    skill: hermes-model-strategy
+    last_success: "2026-07-11T13:00:00Z"
+    evidence: "key label ...ae3 valid"
+    failure_reason: null
+  - connector_id: deepseek
+    service: DeepSeek (LLM)
+    status: VERIFIED
+    projects: [hermes-infrastructure]
+    auth_method: api_key
+    secret_reference: "env:DEEPSEEK_API_KEY"
+    supported_operations: [chat_completions, models_list]
+    health_check: "GET api.deepseek.com/models"
+    skill: null
+    last_success: "2026-07-11T13:00:00Z"
+    evidence: "models list ok"
+    failure_reason: null
+  - connector_id: opencode_go
+    service: OpenCode Go (LLM)
+    status: CONFIGURED
+    projects: [hermes-infrastructure]
+    auth_method: api_key
+    secret_reference: "env:OPENCODE_GO_API_KEY"
+    supported_operations: [chat_completions]
+    health_check: "key present (no live probe)"
+    skill: null
+    last_success: null
+    evidence: "key present"
+    failure_reason: "no live health probe run"
+  - connector_id: telegram
+    service: Telegram Bot API
+    status: VERIFIED
+    projects: [hermes-infrastructure, personal]
+    auth_method: bot_token
+    secret_reference: "env:TELEGRAM_BOT_TOKEN_ASSISTANT"
+    supported_operations: [getMe, getUpdates, sendMessage, polling]
+    health_check: "GET /getMe + /getWebhookInfo + /getUpdates"
+    skill: telegram-gateway-architecture
+    last_success: "2026-07-11T13:00:00Z"
+    evidence: "@{TELEGRAM_BOT_USERNAME} id={TELEGRAM_BOT_ID}, webhook empty, getUpdates FREE"
+    failure_reason: null
+  - connector_id: docker
+    service: Docker Engine
+    status: VERIFIED
+    projects: [hermes-infrastructure, kitchen-platform, ai-monetization]
+    auth_method: local_socket
+    secret_reference: null
+    supported_operations: [ps, logs, exec, port, restart]
+    health_check: "docker ps"
+    skill: docker-management
+    last_success: "2026-07-11T13:00:00Z"
+    evidence: "4 containers up: hermes-agent, mem0-dev-postgres, nocobase, nocobase-postgres"
+    failure_reason: null
+  - connector_id: nocobase
+    service: NocoBase
+    status: VERIFIED
+    projects: [kitchen-platform]
+    auth_method: app_login
+    secret_reference: "container:nocobase env"
+    supported_operations: [http_ui, api]
+    health_check: "GET localhost:13000"
+    skill: nocobase-utils
+    last_success: "2026-07-11T13:00:00Z"
+    evidence: "HTTP 200 on :13000 (80/tcp->13000)"
+    failure_reason: null
+  - connector_id: postgresql
+    service: PostgreSQL (nocobase-postgres)
+    status: VERIFIED
+    projects: [kitchen-platform]
+    auth_method: container_creds
+    secret_reference: "container:nocobase-postgres env"
+    supported_operations: [sql_read, sql_write]
+    health_check: "pg_isready"
+    skill: hermes-neon-postgres
+    last_success: "2026-07-11T13:00:00Z"
+    evidence: "accepting connections :5432"
+    failure_reason: null
+  - connector_id: twilio
+    service: Twilio (SMS/telephony)
+    status: VERIFIED
+    projects: [hermes-infrastructure, personal]
+    auth_method: account_sid_token
+    secret_reference: "env:TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN"
+    supported_operations: [sms, voice]
+    health_check: "GET Accounts/{sid}.json"
+    skill: telephony
+    last_success: "2026-07-11T13:00:00Z"
+    evidence: "account status=active"
+    failure_reason: null
+  - connector_id: vercel
+    service: Vercel
+    status: CONFIGURED
+    projects: [hermes-ai-office, content]
+    auth_method: cli_token
+    secret_reference: "bin:node/vercel"
+    supported_operations: [deploy, ls]
+    health_check: "binary present (no live probe)"
+    skill: hermes-vercel-nextjs
+    last_success: null
+    evidence: "vercel binary present"
+    failure_reason: "no live auth probe run"
+  - connector_id: v0
+    service: v0.dev API
+    status: CONFIGURED
+    projects: [hermes-ai-office, content]
+    auth_method: api_key
+    secret_reference: "file:credentials/v0_api_key.txt"
+    supported_operations: [generate, deploy]
+    health_check: "key file present"
+    skill: v0-api-deploy
+    last_success: null
+    evidence: "key file present"
+    failure_reason: "no live probe run"
+  - connector_id: google_cse
+    service: Google Custom Search
+    status: DEGRADED
+    projects: [hermes-infrastructure]
+    auth_method: api_key
+    secret_reference: "env:GOOGLE_CSE_API_KEY / GOOGLE_CSE_CX"
+    supported_operations: [web_search]
+    health_check: "GET customsearch/v1"
+    skill: null
+    last_success: null
+    evidence: "project lacks CSE JSON API access"
+    failure_reason: "CSE JSON access denied for project"
+  - connector_id: linear_mcp
+    service: Linear (MCP)
+    status: CONFIGURED
+    projects: [hermes-infrastructure]
+    auth_method: mcp_token
+    secret_reference: "file:mcp-tokens/linear.client.json"
+    supported_operations: [issues]
+    health_check: "token file present"
+    skill: null
+    last_success: null
+    evidence: "linear.client.json present"
+    failure_reason: "no live probe run"
+unavailable:
+  - {connector_id: ollama, reason: "not running on :11434"}
+  - {connector_id: cloudflare, reason: "cloudflared/wrangler not installed"}
+  - {connector_id: n8n, reason: "no credentials found"}
+  - {connector_id: redis, reason: "no credentials found"}
+  - {connector_id: supabase, reason: "no credentials found"}
+  - {connector_id: gmail, reason: "no credentials found in this profile scope"}

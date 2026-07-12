@@ -1,0 +1,30 @@
+@echo off
+rem Hermes Gateway - HKP Boot Probe integration
+rem PARAMETERIZED TEMPLATE - replace variables before use
+rem Variables: %%HERMES_HOME%%, %%HKP_AUTHORITY_ROOT%%, %%VENV_PATH%%
+
+set "HERMES_HOME=%%HERMES_HOME%%"
+set "HKP_AUTHORITY_ROOT=%%HKP_AUTHORITY_ROOT%%"
+set "HERMES_DISABLE_BACKGROUND_REVIEW=1"
+set "PYTHONIOENCODING=utf-8"
+set "HERMES_GATEWAY_DETACHED=1"
+set "HKP_PREFLIGHT_DRY_RUN=true"
+set "VIRTUAL_ENV=%%VENV_PATH%%"
+
+rem ── HKP Boot Probe ──────────────────────────────────────
+set "HKP_PROBE=%%HERMES_HOME%%\scripts\hkp_boot_probe.py"
+set "HKP_LOG=%%HERMES_HOME%%\hkp_boot_evidence.log"
+echo [%%DATE%% %%TIME%%] HKP Boot Probe: starting >> "%%HKP_LOG%%"
+"%%VIRTUAL_ENV%%\Scripts\python.exe" "%%HKP_PROBE%%" >> "%%HKP_LOG%%" 2>&1
+if errorlevel 1 (
+    set "HKP_STATE=DEGRADED"
+    echo [%%DATE%% %%TIME%%] HKP Boot Probe: INTEGRITY FAILURE — DEGRADED MODE >> "%%HKP_LOG%%"
+) else (
+    set "HKP_STATE=VERIFIED"
+    echo [%%DATE%% %%TIME%%] HKP Boot Probe: ALL PASS — GOVERNED MODE >> "%%HKP_LOG%%"
+)
+echo [%%DATE%% %%TIME%%] HKP_STATE=%%HKP_STATE%% >> "%%HKP_LOG%%"
+
+"%%VIRTUAL_ENV%%\Scripts\pythonw.exe" -m hermes_cli.main gateway run
+exit /b 0
+

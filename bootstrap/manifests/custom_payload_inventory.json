@@ -1,0 +1,33 @@
+{
+  "schema": "hermesos.genesis.custom-payload-inventory.v0.2",
+  "source_bundle_root": "03_NEW_RUNTIME_FILES",
+  "files": [
+    "agent/approval_service.py",
+    "agent/credential_broker.py",
+    "agent/credential_broker_client.py",
+    "agent/credential_broker_service.py",
+    "agent/execution_context.py",
+    "agent/hermes_core_startup.py",
+    "agent/hkp_binding.py",
+    "agent/hkp_enforcer.py",
+    "agent/hkp_policy_gate.py",
+    "agent/hkp_prompt_guard.py",
+    "agent/tool_preflight.py",
+    "gateway/governance_status.py",
+    "hkp/hkp/__init__.py",
+    "hkp/hkp/audit_ledger.py",
+    "hkp/hkp/broker_server.py",
+    "hkp/hkp/control_plane_service.py",
+    "hkp/hkp/credential_store.py",
+    "hkp/hkp/gateways.py",
+    "hkp/hkp/hkp_client.py",
+    "hkp/hkp/policy_engine.py",
+    "hkp/hkp/schema.py",
+    "scripts/hkp_boot_probe.py"
+  ],
+  "policy": {
+    "missing": "BLOCK",
+    "unexpected": "BLOCK",
+    "checksum_mismatch": "BLOCK"
+  }
+}

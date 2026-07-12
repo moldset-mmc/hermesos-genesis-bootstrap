@@ -1,0 +1,132 @@
+# PROJECT_REGISTRY — HermesOs. Машиночитаемый реестр проектов.
+# Ни один проект не default навсегда. Активный = из сообщения Serghei или последний явно выбранный.
+version: 1
+last_inventory: "2026-07-11T13:00:00Z"
+active_project: null   # определяется при переключении
+projects:
+  - project_id: hkp
+    name: "HKP Governance"
+    objective: "Политика governance/verification для всех профилей Hermes"
+    status: GOVERNED
+    canonical_paths: ["hkp/", "hkp_boot_state.json", "hkp_boot_evidence.log"]
+    repositories: []
+    environments: [local]
+    related_profiles: [default, hermesos]
+    integrations: []
+    skills: [hkp-reader, hkp-governance-analysis]
+    last_checkpoint: null
+    open_actions: []
+    risks: ["stale VERIFIED если probe не переподтверждён"]
+    last_verified: "2026-07-11T12:15:20Z"
+  - project_id: hermes-infrastructure
+    name: "Hermes Infrastructure"
+    objective: "Профили, gateways, модели, коннекторы, автозапуск"
+    status: ACTIVE
+    canonical_paths: ["config.yaml", "profiles/", "honcho.json"]
+    repositories: []
+    environments: [local, kiosk-server]
+    related_profiles: [default, hermesos]
+    integrations: [github, openrouter, deepseek, telegram, docker]
+    skills: [hermes-agent, hermes-model-strategy, hermes-multi-profile-administration]
+    last_checkpoint: null
+    open_actions: []
+    risks: []
+    last_verified: "2026-07-11T13:00:00Z"
+  - project_id: mmc
+    name: "MMC Auto Center"
+    objective: "Автосервис: сотрудники, производство, боты, NocoBase"
+    status: ACTIVE
+    canonical_paths: ["{PROJECT_PORTFOLIO_PATH}"]
+    repositories: []
+    environments: [local]
+    related_profiles: [default, mmc-german, mmc-igor, mmc-kravchenko, mmc-accountant, mmc-mmcagent]
+    integrations: [telegram, nocobase, postgresql]
+    skills: [mmc-system, mmc-agent-production-standard]
+    last_checkpoint: null
+    open_actions: ["Загружается ТОЛЬКО по явному project switch (/switch mmc)"]
+    risks: []
+    last_verified: null
+  - project_id: hermes-ai-office
+    name: "Hermes AI Office"
+    objective: "Продукт AI Office (лендинг подтверждён)"
+    status: ACTIVE
+    canonical_paths: []
+    repositories: []
+    environments: [vercel]
+    related_profiles: [hermesos]
+    integrations: [vercel, v0, github]
+    skills: [saas-landing-page, hermes-vercel-nextjs]
+    last_checkpoint: null
+    open_actions: []
+    risks: []
+    last_verified: null
+  - project_id: public-ai-advisor
+    name: "Public AI Advisor"
+    objective: "Публичный AI-консультант"
+    status: PENDING
+    canonical_paths: []
+    repositories: []
+    environments: []
+    related_profiles: [hermesos]
+    integrations: []
+    skills: [ai-service-market-entry]
+    last_checkpoint: null
+    open_actions: []
+    risks: []
+    last_verified: null
+  - project_id: kitchen-platform
+    name: "Kitchen Core Platform"
+    objective: "Платформа для ресторанов, loyalty"
+    status: ACTIVE
+    canonical_paths: []
+    repositories: []
+    environments: [docker]
+    related_profiles: [hermesos]
+    integrations: [nocobase, postgresql]
+    skills: [kitchen-core-demo]
+    last_checkpoint: null
+    open_actions: []
+    risks: []
+    last_verified: null
+  - project_id: ai-monetization
+    name: "AI Monetization"
+    objective: "Коммерциализация AI-сервисов"
+    status: PENDING
+    canonical_paths: []
+    repositories: []
+    environments: []
+    related_profiles: [hermesos]
+    integrations: []
+    skills: [ai-service-sales, ai-service-positioning]
+    last_checkpoint: null
+    open_actions: []
+    risks: []
+    last_verified: null
+  - project_id: content
+    name: "Content"
+    objective: "Контент, соцавтоматизация, публикации"
+    status: PENDING
+    canonical_paths: []
+    repositories: []
+    environments: []
+    related_profiles: [hermesos]
+    integrations: [vercel, github]
+    skills: [youtube-content]
+    last_checkpoint: null
+    open_actions: []
+    risks: []
+    last_verified: null
+  - project_id: personal
+    name: "Personal Digital Work"
+    objective: "Личная цифровая работа Serghei, задачи, напоминания"
+    status: ACTIVE
+    canonical_paths: ["profiles/hermesos/tasks.yaml"]
+    repositories: []
+    environments: [local]
+    related_profiles: [hermesos]
+    integrations: [telegram, twilio]
+    skills: []
+    last_checkpoint: null
+    open_actions: []
+    risks: []
+    last_verified: "2026-07-11T13:00:00Z"

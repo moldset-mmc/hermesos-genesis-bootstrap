@@ -1,0 +1,938 @@
+diff --git agent/background_review.py agent/background_review.py
+index 985888693..b653f06fa 100644
+--- agent/background_review.py
++++ agent/background_review.py
+@@ -23,7 +23,11 @@ import logging
+ import os
+ from typing import Any, Dict, List, Optional
+ 
+-from agent.thread_scoped_output import thread_scoped_silence
++from agent.execution_context import (
++    ExecutionContext,
++    set_execution_context,
++    clear_execution_context,
++)
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -892,7 +896,11 @@ def spawn_background_review_thread(
+         prompt = getattr(agent, "_SKILL_REVIEW_PROMPT", _SKILL_REVIEW_PROMPT)
+ 
+     def _target() -> None:
+-        _run_review_in_thread(agent, messages_snapshot, prompt)
++        set_execution_context(ExecutionContext.BACKGROUND_REVIEW_READ_ONLY)
++        try:
++            _run_review_in_thread(agent, messages_snapshot, prompt)
++        finally:
++            clear_execution_context()
+ 
+     return _target, prompt
+ 
+diff --git agent/credential_pool.py agent/credential_pool.py
+index 2c7a4825e..c04340922 100644
+--- agent/credential_pool.py
++++ agent/credential_pool.py
+@@ -21,6 +21,72 @@ from agent.credential_persistence import (
+     is_borrowed_credential_source,
+     sanitize_borrowed_credential_payload,
+ )
++
++# ── Credential broker integration ───────────────────────────────────────
++# All credential pool operations route through the HKP-gated credential
++# broker.  Direct access to auth.py functions is replaced by broker calls
++# so gateway, cron, tools, and child processes cannot bypass HKP policy.
++#
++# The broker enforces:
++#   - caller identity (HKP-checked)
++#   - scope validation
++#   - audit logging
++#   - fail-closed on broker/policy outage
++_BROKER_LOADED = False
++_broker_get_credentials = None
++_broker_write_credentials = None
++
++
++def _ensure_broker():
++    """Lazy-load the credential broker module."""
++    global _BROKER_LOADED, _broker_get_credentials, _broker_write_credentials
++    if not _BROKER_LOADED:
++        try:
++            from agent.credential_broker import get_credentials, write_credentials
++            _broker_get_credentials = get_credentials
++            _broker_write_credentials = write_credentials
++        except ImportError:
++            # Broker unavailable -- fail-closed: no credential access
++            _broker_get_credentials = None
++            _broker_write_credentials = None
++        _BROKER_LOADED = True
++
++
++def _brokered_read_credential_pool(provider_id: Optional[str] = None) -> Dict[str, Any]:
++    """Read credentials through broker, fail-closed on broker error."""
++    _ensure_broker()
++    if _broker_get_credentials is not None:
++        result = _broker_get_credentials(provider_id)
++        if "error" in result and "BLOCKED_BY" in str(result.get("error", "")):
++            return {}  # Return empty pool when blocked
++        return result
++    # Fail closed: broker not available
++    logger.error("CREDENTIAL_BROKER_UNAVAILABLE: credential pool access blocked")
++    return {}
++
++
++def _brokered_write_credential_pool(*args, **kwargs) -> bool:
++    """Write credentials through broker, fail-closed on broker error.
++
++    Accepts the same signature as auth.write_credential_pool.
++    """
++    _ensure_broker()
++    if _broker_write_credentials is not None:
++        # Broker write() takes (provider_id, payload) dict-style.
++        # auth.write_credential_pool takes (provider_id, entries, removed_ids=None).
++        # If caller passed the auth-standard signature, repack as dict.
++        provider_id = args[0] if args else kwargs.get("provider_id", "unknown")
++        payload = {"entries": args[1] if len(args) > 1 else kwargs.get("entries", [])}
++        if len(args) > 2 or "removed_ids" in kwargs:
++            payload["removed_ids"] = args[2] if len(args) > 2 else kwargs.get("removed_ids", [])
++        result = _broker_write_credentials(provider_id, payload)
++        return result.get("success", False)
++    logger.error("CREDENTIAL_BROKER_UNAVAILABLE: credential pool write blocked")
++    return False
++
++
++# Fallback: direct auth module import only used when broker is bypassed
++# for legacy compat (logged as warning).
+ import hermes_cli.auth as auth_mod
+ from hermes_cli.auth import (
+     CODEX_ACCESS_TOKEN_REFRESH_SKEW_SECONDS,
+@@ -35,8 +101,6 @@ from hermes_cli.auth import (
+     _save_auth_store,
+     _save_provider_state,
+     _store_provider_state,
+-    read_credential_pool,
+-    write_credential_pool,
+ )
+ 
+ logger = logging.getLogger(__name__)
+@@ -409,7 +473,7 @@ def get_custom_provider_pool_key(base_url: Optional[str], provider_name: Optiona
+ 
+ def list_custom_pool_providers() -> List[str]:
+     """Return all 'custom:*' pool keys that have entries in auth.json."""
+-    pool_data = read_credential_pool(None)
++    pool_data = _brokered_read_credential_pool(None)
+     return sorted(
+         key for key in pool_data
+         if key.startswith(CUSTOM_POOL_PREFIX)
+@@ -538,7 +602,7 @@ class CredentialPool:
+                 return
+ 
+     def _persist(self, *, removed_ids: Optional[List[str]] = None) -> None:
+-        write_credential_pool(
++        _brokered_write_credential_pool(
+             self.provider,
+             [entry.to_dict() for entry in self._entries],
+             removed_ids=removed_ids,
+@@ -1652,7 +1716,7 @@ class CredentialPool:
+             replace(entry, priority=new_priority)
+             for new_priority, entry in enumerate(self._entries)
+         ]
+-        write_credential_pool(
++        _brokered_write_credential_pool(
+             self.provider,
+             [entry.to_dict() for entry in self._entries],
+             removed_ids=[removed.id],
+@@ -2329,7 +2393,7 @@ def _seed_custom_pool(pool_key: str, entries: List[PooledCredential]) -> Tuple[b
+ 
+ def load_pool(provider: str) -> CredentialPool:
+     provider = (provider or "").strip().lower()
+-    raw_entries = read_credential_pool(provider)
++    raw_entries = _brokered_read_credential_pool(provider)
+     disk_ids = {
+         entry.get("id")
+         for entry in raw_entries
+@@ -2364,7 +2428,7 @@ def load_pool(provider: str) -> CredentialPool:
+ 
+     if changed:
+         new_ids = {entry.id for entry in entries}
+-        write_credential_pool(
++        _brokered_write_credential_pool(
+             provider,
+             [entry.to_dict() for entry in sorted(entries, key=lambda item: item.priority)],
+             removed_ids=disk_ids - new_ids,
+diff --git agent/tool_dispatch_helpers.py agent/tool_dispatch_helpers.py
+index 5c9db408b..54de6a77e 100644
+--- agent/tool_dispatch_helpers.py
++++ agent/tool_dispatch_helpers.py
+@@ -28,6 +28,8 @@ import json
+ import logging
+ import os
+ import re
++
++from agent.tool_preflight import preflight, PreflightResult, _is_dry_run
+ from pathlib import Path
+ from typing import Any, Dict, List, Optional
+ 
+@@ -482,6 +484,50 @@ def _maybe_wrap_untrusted(name: str, content: Any) -> Any:
+     return content
+ 
+ 
++def hkp_preflight_tool_call(name: str, args: dict | None = None) -> str | None:
++    """Run HKP preflight check on a tool call before dispatch.
++
++    In dry-run mode: log decision but return None (allow execution).
++    In enforcement mode: return error JSON string for non-ALLOWED results.
++
++    Returns None if ALLOWED (or dry-run), or an error dict JSON string if
++    BLOCKED/PROPOSE/DENY in enforcement mode.
++    """
++    result = preflight(name, args or {})
++    if result == PreflightResult.ALLOWED:
++        return None
++
++    # Dry-run mode — log decision but allow execution
++    if _is_dry_run():
++        logger.info(
++            "HKP_DRY_RUN tool=%s decision=%s args=%s",
++            name, result, json.dumps(args, default=str)[:200],
++        )
++        return None
++
++    if result == PreflightResult.PROPOSE:
++        return json.dumps({
++            "error": "HKP_PREFLIGHT_PROPOSE",
++            "message": f"Action '{name}' requires Owner approval before execution.",
++            "decision": "PROPOSE",
++            "preflight_result": result,
++        })
++    if result == PreflightResult.DENY:
++        return json.dumps({
++            "error": "HKP_PREFLIGHT_DENY",
++            "message": f"Action '{name}' is denied by HKP policy.",
++            "decision": "DENY",
++            "preflight_result": result,
++        })
++    # BLOCKED (default)
++    return json.dumps({
++        "error": "HKP_PREFLIGHT_BLOCKED",
++        "message": f"Action '{name}' is blocked in the current execution context.",
++        "decision": "BLOCKED",
++        "preflight_result": result,
++    })
++
++
+ __all__ = [
+     "_NEVER_PARALLEL_TOOLS",
+     "_PARALLEL_SAFE_TOOLS",
+@@ -500,4 +546,5 @@ __all__ = [
+     "_extract_error_preview",
+     "_trajectory_normalize_msg",
+     "make_tool_result_message",
++    "hkp_preflight_tool_call",
+ ]
+diff --git agent/tool_executor.py agent/tool_executor.py
+index 44b9a367c..abeacefff 100644
+--- agent/tool_executor.py
++++ agent/tool_executor.py
+@@ -312,6 +312,50 @@ def execute_tool_calls_concurrent(agent, assistant_message, messages: list, effe
+     tool_calls = assistant_message.tool_calls
+     num_tools = len(tool_calls)
+ 
++    # ── HKP PREFLIGHT GATE (v1.3) ──────────────────────────────
++    # Every tool execution must pass HKP preflight.  Both sequential and
++    # concurrent paths now route through the same agent/tool_preflight.py
++    # gate via hkp_preflight_tool_call.  ContextVar is the ONLY source of
++    # execution context — tool args such as "ctx": "foreground" are NEVER
++    # used here.
++    try:
++        from agent.tool_dispatch_helpers import hkp_preflight_tool_call
++
++        for tc in list(tool_calls):
++            fn = tc.function.name
++            try:
++                fn_args = json.loads(tc.function.arguments) if tc.function.arguments else {}
++            except Exception:
++                fn_args = {}
++            block_msg = hkp_preflight_tool_call(fn, fn_args)
++            if block_msg is not None:
++                from agent.tool_dispatch_helpers import make_tool_result_message
++                messages.append(make_tool_result_message(
++                    fn,
++                    block_msg,
++                    tc.id,
++                ))
++                _flush_session_db_after_tool_progress(
++                    agent,
++                    messages,
++                    stage=f"hkp_blocked tool {fn}",
++                )
++                tool_calls = [t for t in tool_calls if t.id != tc.id]
++    except ImportError:
++        # Fail closed: preflight unavailable
++        from agent.tool_dispatch_helpers import make_tool_result_message
++        for tc in tool_calls:
++            messages.append(make_tool_result_message(
++                tc.function.name,
++                '{"error": "HKP_PREFLIGHT_UNAVAILABLE", "message": "HKP preflight enforcer not available — tool blocked for safety.", "decision": "BLOCKED"}',
++                tc.id,
++            ))
++            _flush_session_db_after_tool_progress(
++                agent, messages,
++                stage=f"hkp_blocked (import) {tc.function.name}",
++            )
++        return
++
+     # Resolve the context-scaled tool-output budget once per turn (cheap, but
+     # avoids rebuilding it per result inside the loop below).
+     _tool_budget = _budget_for_agent(agent)
+@@ -1026,10 +1070,26 @@ def execute_tool_calls_sequential(agent, assistant_message, messages: list, effe
+             tool_call_id=getattr(tool_call, "id", "") or "",
+         )
+ 
++        # ── HKP PREFLIGHT GATE (v1.3) ──────────────────────────────
++        # Check execution context before any plugin/guardrail check.
++        # ContextVar is the ONLY source of execution context — tool args
++        # such as "ctx": "foreground" are NEVER used here.
++        _hkp_block_msg: Optional[str] = None
++        try:
++            from agent.tool_dispatch_helpers import hkp_preflight_tool_call
++            _hkp_block = hkp_preflight_tool_call(function_name, function_args)
++            if _hkp_block is not None:
++                _hkp_block_msg = _hkp_block
++        except Exception:
++            pass
++
+         # Check plugin hooks for a block directive before executing.
+         _block_msg: Optional[str] = None
+         _block_error_type = "plugin_block"
+-        if _ts_scope_block is not None:
++        if _hkp_block_msg is not None:
++            _block_msg = _hkp_block_msg
++            _block_error_type = "hkp_preflight"
++        elif _ts_scope_block is not None:
+             _block_msg = _ts_scope_block
+             _block_error_type = "tool_scope_block"
+         else:
+diff --git cron/scheduler.py cron/scheduler.py
+index 6c26efb86..108e1a340 100644
+--- cron/scheduler.py
++++ cron/scheduler.py
+@@ -2251,15 +2251,42 @@ def _guard_job_credential_exfil(job: dict) -> None:
+ 
+ 
+ def run_job(job: dict) -> tuple[bool, str, str, Optional[str]]:
+-    """
+-    Execute a single cron job.
+-    
++    """Execute a single cron job.
++
+     Returns:
+         Tuple of (success, full_output_doc, final_response, error_message)
+     """
+     job_id = job["id"]
+     job_name = str(job.get("name") or job.get("prompt") or job_id or "cron job")
+ 
++    # ── HKP ENFORCEMENT GATE ──────────────────────────────────
++    # Every cron job — whether no_agent script or full LLM run —
++    # must pass hkp_check() before any execution.  Fail closed on
++    # denial, ImportError, or missing HKP module.
++    try:
++        from agent.hkp_enforcer import hkp_check_or_raise
++        hkp_check_or_raise(action="cron.execute", target=job_id)
++    except ImportError:
++        err = "HKP enforcer not available — job blocked (fail-closed)"
++        logger.error("Job '%s': %s", job_id, err)
++        doc = (
++            f"# Cron Job: {job_name}\\n\\n"
++            f"**Job ID:** {job_id}\\n"
++            f"**Status:** BLOCKED\\n\\n"
++            f"{err}\\n"
++        )
++        return False, doc, "", err
++    except RuntimeError as hkp_err:
++        err = str(hkp_err)
++        logger.error("Job '%s': %s", job_id, err)
++        doc = (
++            f"# Cron Job: {job_name}\\n\\n"
++            f"**Job ID:** {job_id}\\n"
++            f"**Status:** BLOCKED_BY_HKP\\n\\n"
++            f"{err}\\n"
++        )
++        return False, doc, "", err
++
+     # ---------------------------------------------------------------
+     # no_agent short-circuit — the script IS the job, no LLM involvement.
+     # ---------------------------------------------------------------
+@@ -3200,20 +3227,24 @@ def _notify_provider_jobs_changed() -> None:
+ 
+ 
+ def tick(verbose: bool = True, adapters=None, loop=None, sync: bool = True) -> int:
+-    """
+-    Check and run all due jobs.
+-    
+-    Uses a file lock so only one tick runs at a time, even if the gateway's
+-    in-process ticker and a standalone daemon or manual tick overlap.
+-    
+-    Args:
+-        verbose: Whether to print status messages
+-        adapters: Optional dict mapping Platform → live adapter (from gateway)
+-        loop: Optional asyncio event loop (from gateway) for live adapter sends
+-    
+-    Returns:
+-        Number of jobs executed (0 if another tick is already running)
+-    """
++    """Check and run all due jobs."""
++
++    # ── HKP EMERGENCY STOP ────────────────────────────────────
++    # Check kill switch before acquiring the file lock.  If the
++    # emergency stop is active, NO cron job runs.  This is the
++    # broadest possible check, at the outermost tick boundary,
++    # before any per-job logic or lock contention.
++    try:
++        from agent.hkp_enforcer import is_emergency_stop
++        if is_emergency_stop():
++            logger.warning("HKP_EMERGENCY_STOP active — tick() refusing to dispatch any jobs")
++            return 0
++    except ImportError:
++        # Fail closed: if the HKP module can't be loaded, do not
++        # run any cron jobs.
++        logger.error("HKP enforcer not available — tick() refusing to dispatch jobs")
++        return 0
++
+     lock_dir, lock_file = _get_lock_paths()
+     lock_dir.mkdir(parents=True, exist_ok=True)
+ 
+diff --git gateway/delivery.py gateway/delivery.py
+index 77b245d29..e45936482 100644
+--- gateway/delivery.py
++++ gateway/delivery.py
+@@ -292,6 +292,19 @@ class DeliveryRouter:
+                 if target.platform == Platform.LOCAL:
+                     result = self._deliver_local(content, job_id, job_name, metadata)
+                 else:
++                    # ── HKP ENFORCEMENT GATE ────────────────────────
++                    from agent.hkp_enforcer import hkp_check
++                    gate_action = f"platform.send:{target.platform.value}"
++                    gate_target = target.chat_id or target.platform.value
++                    decision = hkp_check(action=gate_action, target=gate_target)
++                    if not decision["allowed"]:
++                        err_msg = f"BLOCKED_BY_HKP: {decision['reason']} [{decision['policy_class']}]"
++                        logger.warning("Delivery blocked: %s", err_msg)
++                        results[target.to_string()] = {
++                            "success": False,
++                            "error": err_msg,
++                        }
++                        continue
+                     result = await self._deliver_to_platform(target, content, metadata)
+                     # Successful platform delivery — clear any stale dead flag.
+                     if target.chat_id and not _send_result_failed(result):
+diff --git gateway/platforms/api_server.py gateway/platforms/api_server.py
+index a02959684..9c7de6d13 100644
+--- gateway/platforms/api_server.py
++++ gateway/platforms/api_server.py
+@@ -4043,6 +4043,14 @@ class APIServerAdapter(BasePlatformAdapter):
+         def _run():
+             from gateway.session_context import clear_session_vars
+ 
++            # ── HKP execution context (Phase B) ──────────────────
++            from agent.execution_context import (
++                ExecutionContext,
++                set_execution_context,
++                clear_execution_context,
++            )
++            set_execution_context(ExecutionContext.FOREGROUND)
++
+             tokens = self._bind_api_server_session(
+                 chat_id=session_id or "",
+                 session_key=gateway_session_key or session_id or "",
+@@ -4080,6 +4088,7 @@ class APIServerAdapter(BasePlatformAdapter):
+                     result["session_id"] = _eff_sid
+                 return result, usage
+             finally:
++                clear_execution_context()
+                 clear_session_vars(tokens)
+ 
+         self._inflight_agent_runs += 1
+diff --git gateway/run.py gateway/run.py
+index 646a48569..e29d8dfc4 100644
+--- gateway/run.py
++++ gateway/run.py
+@@ -54,6 +54,7 @@ from typing import Callable, Dict, Optional, Any, List, Union
+ # preserving the established test-patch surface.
+ from agent.account_usage import fetch_account_usage, render_account_usage_lines
+ from agent.async_utils import safe_schedule_threadsafe
++from agent.execution_context import set_execution_context, get_execution_context, ExecutionContext
+ from agent.i18n import t
+ from hermes_cli.config import cfg_get
+ from hermes_cli.fallback_config import get_fallback_chain
+@@ -10329,6 +10330,18 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
+ 
+         session_entry = self.session_store.get_or_create_session(source)
+         session_key = session_entry.session_key
++
++        # HKP: authenticated owner foreground context
++        try:
++            if self._is_user_authorized(source):
++                set_execution_context(ExecutionContext.FOREGROUND_OWNER)
++                logger.debug(
++                    "HKP context set to FOREGROUND_OWNER for authorized source=%s",
++                    source,
++                )
++        except Exception:
++            logger.exception("HKP failed to establish owner execution context")
++
+         self._cache_session_source(session_key, source)
+         if await asyncio.to_thread(self._is_telegram_topic_lane, source):
+             try:
+@@ -18567,6 +18580,73 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
+         ):
+             _NOTIFY_INTERVAL = None
+         _notify_start = time.time()
++        # Holder so the cleanup/finally block can flip the single status
++        # bubble to "✅ Готово" (or a stop reason) after the run ends. The
++        # heartbeat coroutine owns this message id; cleanup reads it.
++        _heartbeat_state = {"msg_id": None, "shown": False}
++
++        def _build_heartbeat_text(_elapsed_s: float, _agent_ref) -> str:
++            """Stage-aware, Russian progress line for a single status bubble.
++
++            Wired directly into the runtime long-run path — no skill call,
++            no dependency on the model 'remembering' a rule. Chooses the
++            glyph/phrase from the live agent activity summary:
++              💻 tool execution · ⏳ waiting on model · 🔄 general working.
++            """
++            _m = int(_elapsed_s // 60)
++            _s = int(_elapsed_s % 60)
++            _elapsed_str = f"{_m} мин {_s:02d} с" if _m else f"{_s} с"
++            _tool = None
++            _since = None
++            _detail = None
++            if _agent_ref and hasattr(_agent_ref, "get_activity_summary"):
++                try:
++                    _a = _agent_ref.get_activity_summary()
++                    _tool = _a.get("current_tool")
++                    _since = _a.get("seconds_since_activity")
++                    _detail = _a.get("last_activity_desc")
++                except Exception:
++                    pass
++            if _tool:
++                # Actively running a tool.
++                _op = str(_tool)
++                return f"💻 Работаю — {_elapsed_str} — выполняю {_op}"
++            # No active tool: either waiting on the model response or between
++            # steps. A longer idle gap almost always means we're blocked on
++            # the provider stream.
++            if _since is not None and _since >= 4:
++                return f"⏳ Работаю — {_elapsed_str} — ожидаю ответ модели"
++            if _detail:
++                return f"🔄 Работаю — {_elapsed_str} — {_detail}"
++            return f"🔄 Работаю — {_elapsed_str}"
++
++        async def _send_or_edit_status(_adapter, _text: str) -> None:
++            """Maintain ONE status bubble: edit in place, fall back to send."""
++            try:
++                _res = None
++                if _heartbeat_state["msg_id"]:
++                    try:
++                        _res = await _adapter.edit_message(
++                            source.chat_id,
++                            _heartbeat_state["msg_id"],
++                            _text,
++                        )
++                    except Exception as _ee:
++                        logger.debug("Heartbeat edit failed: %s", _ee)
++                        _res = None
++                if not (_res and getattr(_res, "success", False)):
++                    _res = await _adapter.send(
++                        source.chat_id,
++                        _text,
++                        metadata=_non_conversational_metadata(_status_thread_metadata, platform=source.platform),
++                    )
++                    if getattr(_res, "success", False) and getattr(_res, "message_id", None):
++                        _heartbeat_state["msg_id"] = str(_res.message_id)
++                        if _cleanup_progress and _heartbeat_state["msg_id"] not in _cleanup_msg_ids:
++                            _cleanup_msg_ids.append(_heartbeat_state["msg_id"])
++                _heartbeat_state["shown"] = True
++            except Exception as _ne:
++                logger.debug("Long-running notification error: %s", _ne)
+ 
+         async def _notify_long_running():
+             if _NOTIFY_INTERVAL is None:
+@@ -18574,20 +18654,24 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
+             _notify_adapter = self.adapters.get(source.platform)
+             if not _notify_adapter:
+                 return
+-            # Track the heartbeat message id so we can edit-in-place on
+-            # platforms that support it (Telegram, Discord, Slack, etc.)
+-            # instead of spamming a new "Still working" bubble every
+-            # interval. Falls back to send-new when edit fails or isn't
+-            # supported by the adapter.
+-            _heartbeat_msg_id: Optional[str] = None
++            # 1) Immediate acceptance ack — the owner sees signal within the
++            #    first second, not after a full interval. Single bubble that
++            #    every later heartbeat edits in place (Telegram/Discord/Slack).
++            await _send_or_edit_status(_notify_adapter, "🟡 Запрос принят")
++            # 2) Fast first "working" beat so a run that crosses ~20-30s shows
++            #    a real stage line quickly, then settles into the steady
++            #    interval. _FIRST_BEAT is capped so it never exceeds the
++            #    configured steady interval.
++            _first_beat = min(25.0, _NOTIFY_INTERVAL)
++            _slept = 0.0
+             while True:
+-                await asyncio.sleep(_NOTIFY_INTERVAL)
++                _step = _first_beat if not _heartbeat_state.get("_first_done") else _NOTIFY_INTERVAL
++                await asyncio.sleep(_step)
++                _heartbeat_state["_first_done"] = True
+                 # Stop heartbeating once this run no longer owns the session
+                 # slot or the executor has finished — otherwise a stale
+                 # "running: delegate_task" bubble can outlive the run that
+-                # spawned it (#12029). _executor_task is a closure var bound
+-                # just after this task is scheduled; tolerate the brief window
+-                # before then (the first wake is _NOTIFY_INTERVAL away anyway).
++                # spawned it (#12029).
+                 try:
+                     _exec_ref = _executor_task
+                 except NameError:
+@@ -18596,63 +18680,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
+                     session_key, agent_holder[0], _exec_ref
+                 ):
+                     break
+-                _elapsed_mins = int((time.time() - _notify_start) // 60)
+-                # Include agent activity context if available. Default
+-                # heartbeat is terse: elapsed + current tool. Verbose
+-                # iteration counter is gated on busy_ack_detail so users
+-                # who want it can opt in per platform.
+-                _agent_ref = agent_holder[0]
+-                _status_detail = ""
+-                _want_iteration_detail = bool(
+-                    resolve_display_setting(
+-                        user_config,
+-                        platform_key,
+-                        "busy_ack_detail",
+-                        True,
+-                    )
+-                )
+-                if _agent_ref and hasattr(_agent_ref, "get_activity_summary"):
+-                    try:
+-                        _a = _agent_ref.get_activity_summary()
+-                        _parts = []
+-                        if _want_iteration_detail:
+-                            _parts.append(
+-                                f"iteration {_a['api_call_count']}/{_a['max_iterations']}"
+-                            )
+-                        _action = _a.get("current_tool") or _a.get("last_activity_desc")
+-                        if _action:
+-                            _parts.append(str(_action))
+-                        if _parts:
+-                            _status_detail = " — " + ", ".join(_parts)
+-                    except Exception:
+-                        pass
+-                _heartbeat_text = f"⏳ Working — {_elapsed_mins} min{_status_detail}"
+-                try:
+-                    _notify_res = None
+-                    if _heartbeat_msg_id:
+-                        try:
+-                            _notify_res = await _notify_adapter.edit_message(
+-                                source.chat_id,
+-                                _heartbeat_msg_id,
+-                                _heartbeat_text,
+-                            )
+-                        except Exception as _ee:
+-                            logger.debug("Heartbeat edit failed: %s", _ee)
+-                            _notify_res = None
+-                    if not (_notify_res and getattr(_notify_res, "success", False)):
+-                        _notify_res = await _notify_adapter.send(
+-                            source.chat_id,
+-                            _heartbeat_text,
+-                            metadata=_non_conversational_metadata(_status_thread_metadata, platform=source.platform),
+-                        )
+-                        if getattr(_notify_res, "success", False) and getattr(
+-                            _notify_res, "message_id", None
+-                        ):
+-                            _heartbeat_msg_id = str(_notify_res.message_id)
+-                            if _cleanup_progress:
+-                                _cleanup_msg_ids.append(_heartbeat_msg_id)
+-                except Exception as _ne:
+-                    logger.debug("Long-running notification error: %s", _ne)
++                _elapsed_s = time.time() - _notify_start
++                _heartbeat_text = _build_heartbeat_text(_elapsed_s, agent_holder[0])
++                await _send_or_edit_status(_notify_adapter, _heartbeat_text)
+ 
+         _notify_task = asyncio.create_task(_notify_long_running())
+ 
+@@ -19187,6 +19217,33 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
+             interrupt_monitor.cancel()
+             _notify_task.cancel()
+ 
++            # Flip the single status bubble to a terminal state so the owner
++            # gets an explicit ✅ Готово (or ⚠️ Остановлено — reason) instead
++            # of a heartbeat frozen mid-run. Only when a heartbeat was
++            # actually shown (long run) — short runs never created a bubble.
++            try:
++                if _heartbeat_state.get("shown") and _heartbeat_state.get("msg_id"):
++                    _final_adapter = self.adapters.get(source.platform)
++                    if _final_adapter is not None:
++                        _final_text = "✅ Готово"
++                        try:
++                            _resp_ref = response  # set in the try body on normal completion
++                        except NameError:
++                            _resp_ref = None
++                        if isinstance(_resp_ref, dict) and _resp_ref.get("failed"):
++                            _reason = str(
++                                _resp_ref.get("error")
++                                or _resp_ref.get("final_response")
++                                or "выполнение прервано"
++                            )[:180]
++                            _final_text = f"⚠️ Остановлено — {_reason}"
++                        try:
++                            await _send_or_edit_status(_final_adapter, _final_text)
++                        except Exception as _fe:
++                            logger.debug("Heartbeat finalize failed: %s", _fe)
++            except Exception as _fin_err:
++                logger.debug("Heartbeat finalize outer error: %s", _fin_err)
++
+             # Wait for stream consumer to finish its final edit
+             if stream_task:
+                 # If the agent never created a stream consumer (e.g. non-
+@@ -20194,3 +20251,5 @@ def _exit_after_graceful_shutdown(exit_code: int) -> None:
+ 
+ if __name__ == "__main__":
+     main()
++
++
+diff --git plugins/platforms/telegram/adapter.py plugins/platforms/telegram/adapter.py
+index 172e0a33c..93a994884 100644
+--- plugins/platforms/telegram/adapter.py
++++ plugins/platforms/telegram/adapter.py
+@@ -3258,6 +3258,24 @@ class TelegramAdapter(BasePlatformAdapter):
+         if not content or not content.strip():
+             return SendResult(success=True, message_id=None)
+         
++        # ── HKP ENFORCEMENT GATE (second line) ─────────────────
++        try:
++            from agent.hkp_enforcer import hkp_check
++            decision = hkp_check(action="telegram.send", target=chat_id)
++            if not decision["allowed"]:
++                return SendResult(
++                    success=False,
++                    error=f"BLOCKED_BY_HKP: {decision['reason']}",
++                    retryable=False,
++                )
++        except ImportError:
++            # Fail closed if HKP module can't be loaded
++            return SendResult(
++                success=False,
++                error="BLOCKED_BY_HKP: HKP enforcer not available",
++                retryable=False,
++            )
++
+         try:
+             # Bot API 10.1 rich fast-path: send the raw agent markdown via
+             # sendRichMessage so tables/task lists/etc. render natively. Falls
+@@ -7054,6 +7072,16 @@ class TelegramAdapter(BasePlatformAdapter):
+         event.text = self._clean_bot_trigger_text(event.text)
+         await self._cache_replied_media(msg, event)
+         event = self._apply_telegram_group_observe_attribution(event)
++        # ── Issue inbound reply permit for this chat ────────────
++        # Allows one reply to this chat within 120s.  The permit is
++        # consumed by hkp_check on the outbound reply path.
++        try:
++            from agent.hkp_enforcer import mark_inbound_message
++            chat_id = str(msg.chat.id) if msg.chat else ""
++            if chat_id:
++                mark_inbound_message(chat_id)
++        except Exception:
++            pass  # permit is best-effort; HKP enforcement is independent
+         self._enqueue_text_event(event)
+ 
+     async def _handle_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+diff --git tools/cronjob_tools.py tools/cronjob_tools.py
+index 02ac58f9c..b43639a3a 100644
+--- tools/cronjob_tools.py
++++ tools/cronjob_tools.py
+@@ -13,6 +13,8 @@ from pathlib import Path
+ from typing import Any, Dict, List, Optional, Union
+ 
+ from hermes_constants import display_hermes_home
++from agent.execution_context import get_execution_context
++from agent.tool_preflight import preflight, PreflightResult
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -670,6 +672,16 @@ def cronjob(
+     task_id: str = None,
+ ) -> str:
+     """Unified cron job management tool."""
++    # HKP preflight - runtime/tool-layer enforcement
++    _hkp_ctx = get_execution_context()
++    _hkp_result = preflight("cronjob", {"action": action, "name": name or ""})
++    if _hkp_result == PreflightResult.BLOCKED:
++        return json.dumps({"success": False,
++                           "error": f"Cron action '{action}' blocked by HKP policy in context '{_hkp_ctx}'."})
++    if _hkp_result == PreflightResult.DENY:
++        return json.dumps({"success": False,
++                           "error": f"Cron action '{action}' denied by HKP policy."})
++
+     del task_id  # unused but kept for handler signature compatibility
+ 
+     try:
+diff --git tools/delegate_tool.py tools/delegate_tool.py
+index 2baf4da30..d65290136 100644
+--- tools/delegate_tool.py
++++ tools/delegate_tool.py
+@@ -1918,6 +1918,11 @@ def _run_single_child(
+ 
+         def _run_with_thread_capture():
+             _worker_thread_holder["t"] = threading.current_thread()
++            # Isolate subagent in ExecutionContext.SUBAGENT so preflight
++            # gates every tool against SUBAGENT-scoped permissions instead of
++            # inheriting the parent's FOREGROUND_OWNER context.
++            from agent.execution_context import set_execution_context, ExecutionContext
++            set_execution_context(ExecutionContext.SUBAGENT)
+             return child.run_conversation(
+                 user_message=goal,
+                 task_id=child_task_id,
+diff --git tools/file_tools.py tools/file_tools.py
+index 0ebded2f6..0152b3a0a 100644
+--- tools/file_tools.py
++++ tools/file_tools.py
+@@ -18,6 +18,8 @@ from tools.file_operations import (
+ )
+ from tools import file_state
+ from agent.redact import redact_sensitive_text
++from agent.execution_context import get_execution_context
++from agent.tool_preflight import preflight, PreflightResult
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -1569,6 +1571,13 @@ def write_file_tool(path: str, content: str, task_id: str = "default",
+     Pass ``True`` after explicit user direction — same shape as ``force``
+     on the terminal tool.
+     """
++    # HKP preflight — runtime/tool-layer enforcement
++    hkp_result = preflight("write_file", {"path": path})
++    if hkp_result in (PreflightResult.BLOCKED, PreflightResult.DENY):
++        return tool_error(f"File write blocked by HKP policy in context '{get_execution_context()}'.")
++    if hkp_result == PreflightResult.PROPOSE:
++        return tool_error("File write requires Owner approval.")
++
+     sensitive_err = _check_sensitive_path(path, task_id)
+     if sensitive_err:
+         return tool_error(sensitive_err)
+diff --git tools/memory_tool.py tools/memory_tool.py
+index 02315bd07..14cf86349 100644
+--- tools/memory_tool.py
++++ tools/memory_tool.py
+@@ -31,9 +31,11 @@ import time
+ from contextlib import contextmanager
+ from pathlib import Path
+ from hermes_constants import get_hermes_home
++from utils import atomic_replace
+ from typing import Dict, Any, List, Optional
+ 
+-from utils import atomic_replace
++from agent.execution_context import ExecutionContext, get_execution_context
++from agent.tool_preflight import preflight, PreflightResult
+ 
+ # fcntl is Unix-only; on Windows use msvcrt for file locking
+ msvcrt = None
+@@ -831,6 +833,30 @@ def _apply_write_gate(action: str, target: str, content: Optional[str],
+     if action not in {"add", "replace", "remove"}:
+         return None
+ 
++    # HKP preflight — runtime/tool-layer enforcement BEFORE approval gate
++    hkp_result = preflight(
++        "memory_write",
++        {"action": action, "target": target},
++    )
++    if hkp_result == PreflightResult.BLOCKED:
++        return json.dumps({
++            "success": False,
++            "error": "HKP_PREFLIGHT_BLOCKED",
++            "message": "Memory write is blocked in the current execution context.",
++        }, ensure_ascii=False)
++    if hkp_result == PreflightResult.DENY:
++        return json.dumps({
++            "success": False,
++            "error": "HKP_PREFLIGHT_DENY",
++            "message": "Memory write is denied by HKP policy.",
++        }, ensure_ascii=False)
++    if hkp_result == PreflightResult.PROPOSE:
++        return json.dumps({
++            "success": False,
++            "error": "HKP_PREFLIGHT_PROPOSE",
++            "message": "This memory write requires Owner approval.",
++        }, ensure_ascii=False)
++
+     try:
+         from tools import write_approval as wa
+     except Exception:
+diff --git tools/skill_manager_tool.py tools/skill_manager_tool.py
+index 2d7d9fa9a..5286058f8 100644
+--- tools/skill_manager_tool.py
++++ tools/skill_manager_tool.py
+@@ -44,7 +44,8 @@ from typing import Any, Dict, List, Optional, Tuple
+ 
+ from hermes_constants import get_hermes_home, display_hermes_home
+ from utils import atomic_replace, is_truthy_value
+-from hermes_cli.config import cfg_get
++from agent.execution_context import ExecutionContext, get_execution_context
++from agent.tool_preflight import preflight, PreflightResult
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -1317,9 +1318,22 @@ def skill_manage(
+ 
+     Returns JSON string with results.
+     """
+-    preflight = _background_review_preflight(action, name)
+-    if preflight is not None:
+-        return json.dumps(preflight, ensure_ascii=False)
++    # HKP preflight — runtime/tool-layer enforcement
++    ctx = get_execution_context()
++    hkp_result = preflight("skill_manage", {"action": action, "name": name, "skill_class": "operational"})
++    if hkp_result == PreflightResult.BLOCKED:
++        return json.dumps({"success": False, "error": "HKP_PREFLIGHT_BLOCKED",
++                           "message": f"Skill '{action}' is blocked in context '{ctx}'."}, ensure_ascii=False)
++    if hkp_result == PreflightResult.DENY:
++        return json.dumps({"success": False, "error": "HKP_PREFLIGHT_DENY",
++                           "message": f"Skill '{action}' on class 'operational' is denied by HKP policy."}, ensure_ascii=False)
++    if hkp_result == PreflightResult.PROPOSE:
++        return json.dumps({"success": False, "error": "HKP_PREFLIGHT_PROPOSE",
++                           "message": f"Skill '{action}' requires Owner approval."}, ensure_ascii=False)
++
++    bg_review_result = _background_review_preflight(action, name)
++    if bg_review_result is not None:
++        return json.dumps(bg_review_result, ensure_ascii=False)
+ 
+     # Approval gate: when on, stages the write for review (skills are too large
+     # to review inline, so they always stage regardless of origin); when off
+diff --git tools/terminal_tool.py tools/terminal_tool.py
+index 69ef5dc86..06d8ea67e 100644
+--- tools/terminal_tool.py
++++ tools/terminal_tool.py
+@@ -46,6 +46,8 @@ from pathlib import Path
+ from typing import Optional, Dict, Any, List
+ 
+ from utils import env_var_enabled
++from agent.execution_context import get_execution_context
++from agent.tool_preflight import preflight, PreflightResult
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -2031,6 +2033,16 @@ def terminal_tool(
+         # Force run after user confirmation
+         # Note: force parameter is internal only, not exposed to model API
+     """
++    # HKP preflight — runtime/tool-layer enforcement
++    _hkp_ctx = get_execution_context()
++    _hkp_result = preflight("terminal", {"command": command, "background": str(background)})
++    if _hkp_result == PreflightResult.BLOCKED:
++        return json.dumps({"output": "", "exit_code": -1,
++                           "error": f"Terminal blocked by HKP policy in context '{_hkp_ctx}'."})
++    if _hkp_result == PreflightResult.DENY:
++        return json.dumps({"output": "", "exit_code": -1,
++                           "error": "Terminal denied by HKP policy."})
++
+     try:
+         if not isinstance(command, str):
+             logger.warning(

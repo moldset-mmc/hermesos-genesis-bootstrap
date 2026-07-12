@@ -1,0 +1,24 @@
+{
+  "schema": "hermesos.genesis.clean-install-validation.v0.1",
+  "timestamp_utc": "2026-07-11T22:04:08.269124+00:00",
+  "target": "E:\\HKP_PROJECTS\\HERMESOS_GENESIS\\05_BOOTSTRAP_IMPLEMENTATION\\HERMESOS_GENESIS_BOOTSTRAP_IMPLEMENTATION_v0.1\\workspace\\clean-install-validation-v1",
+  "baseline": {
+    "commit": "cd124ad1fae574dcdab8124924f84201d65277da",
+    "version": "0.18.0",
+    "clean_before_apply": true
+  },
+  "results": {
+    "clean_install_bootstrap": "PASS",
+    "reproducible_from_clean_official_hermes": "YES",
+    "hermesos_profile_created": "YES_DURING_APPLY_AND_REMOVED_BY_ROLLBACK",
+    "hkp_governance_bound": "YES",
+    "runtime_enforcement_installed": "YES",
+    "boot_probe": "PASS",
+    "rollback": "PASS",
+    "live_current_hermes_modified": "NO"
+  },
+  "boot_probe_state": "VERIFIED",
+  "boot_probe_manifest": "HKP-INT-006",
+  "external_service_checks": "NOT_EXECUTED_IN_CLEAN_INSTALL_MODE",
+  "final_runtime_git_status": "EMPTY"
+}

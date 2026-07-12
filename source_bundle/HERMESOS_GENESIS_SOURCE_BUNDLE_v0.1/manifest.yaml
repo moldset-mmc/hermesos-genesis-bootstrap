@@ -1,0 +1,51 @@
+package:
+  name: HERMESOS_GENESIS_SOURCE_BUNDLE
+  version: 0.1.0
+  status: COMPLETE
+  classification: CLEAN_PORTABLE_EVIDENTIAL_SOURCE_MATERIAL
+  contract: HERMESOS_GENESIS_DESIGN_PACK_v0.1
+
+upstream_baseline:
+  repository: https://github.com/NousResearch/hermes-agent.git
+  branch: main
+  pinned_commit: cd124ad1f
+  pip_package: hermes-agent==0.18.0
+  python: ">=3.11"
+  baseline_evidence: 01_SOURCE_INVENTORY/01_UPSTREAM_RUNTIME_BASELINE.md
+
+contents:
+  profile_artifacts: 7
+  governance_dependencies: 11
+  runtime_components: 13
+  new_custom_runtime_files: 21
+  validation_material_files: 2
+  modified_upstream_files: 15
+  patches: 1
+  secret_templates: 1
+  gateway_templates: 1
+
+portability:
+  real_secrets_included: false
+  host_specific_paths_in_payload: false
+  generated_state_included: false
+  canonical_hkp_modified: false
+  runtime_patches_applied: false
+  github_published: false
+
+validation:
+  status: SOURCE_VALIDATION_ONLY
+  live_verified: false
+  isolation_verified: false
+  ready: false
+  patch_apply_check: DEFERRED_TO_IMPLEMENTATION
+  secret_scan: PASS
+  absolute_path_scan: PASS
+  python_syntax: PASS
+
+required_next_stage: HERMESOS_GENESIS_BOOTSTRAP_IMPLEMENTATION_v0.1
+references:
+  provenance: 09_BUNDLE_METADATA/PROVENANCE.md
+  discrepancies: 09_BUNDLE_METADATA/DISCREPANCIES.md
+  contents: 09_BUNDLE_METADATA/CONTENTS.md
+  validation: 08_VALIDATION/validation_matrix.yaml
+  checksums: 09_BUNDLE_METADATA/SHASUMS.sha256

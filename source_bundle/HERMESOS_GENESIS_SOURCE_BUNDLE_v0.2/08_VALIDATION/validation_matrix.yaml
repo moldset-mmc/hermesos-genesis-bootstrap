@@ -1,0 +1,33 @@
+package: HERMESOS_GENESIS_SOURCE_BUNDLE_v0.1
+status: SOURCE_VALIDATION_ONLY
+claims_prohibited:
+  - LIVE_VERIFIED
+  - ISOLATION_VERIFIED
+  - READY
+checks:
+  - id: SV-01
+    name: Custom runtime Python syntax
+    method: python -m compileall 03_NEW_RUNTIME_FILES
+    result: PASS
+    evidence_class: SOURCE_VERIFIED
+  - id: SV-02
+    name: Modified-upstream patch inventory
+    method: Count diff --git headers in 001_all_upstream_modifications.patch
+    expected: 15
+    result: PASS
+    evidence_class: SOURCE_VERIFIED
+  - id: SV-03
+    name: Secret-value absence
+    method: Pattern scan of payload excluding provenance patch
+    result: PASS
+    evidence_class: SOURCE_VERIFIED
+  - id: SV-04
+    name: Host-specific absolute-path absence
+    method: Scan payload excluding provenance patch
+    result: PASS
+    evidence_class: SOURCE_VERIFIED
+  - id: LV-01
+    name: Runtime enforcement and isolation
+    method: Execute DP-11 live tests after approved patch application
+    result: NOT_RUN
+    evidence_class: NOT_LIVE_VERIFIED

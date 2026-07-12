@@ -1,0 +1,41 @@
+release:
+  product: HERMESOS_GENESIS_BOOTSTRAP
+  version: RC_v0.1
+  status: RELEASE_CANDIDATE
+  publication: NOT_PUBLISHED
+upstream:
+  repository: https://github.com/NousResearch/hermes-agent.git
+  package: hermes-agent==0.18.0
+  pinned_commit: cd124ad1fae574dcdab8124924f84201d65277da
+  python: '>=3.11'
+packages:
+  design_pack: packages/HERMESOS_GENESIS_DESIGN_PACK_v0.1
+  source_bundle: packages/HERMESOS_GENESIS_SOURCE_BUNDLE_v0.1
+  bootstrap_implementation: packages/HERMESOS_GENESIS_BOOTSTRAP_IMPLEMENTATION_v0.1
+proven:
+  clean_install_bootstrap: PASS
+  reproducible_from_clean_official_hermes: YES
+  boot_probe: PASS
+  rollback: PASS
+  live_current_hermes_modified: NO
+execution_boundary:
+  live_apply: NOT_EXECUTED
+  owner_approval_required: true
+  no_foundation_changes: true
+  no_design_pack_semantic_changes: true
+  no_source_bundle_original_changes: true
+integrity:
+  release_checksums: checksums/RC_SHASUMS.sha256
+  package_checksums: checksums/PACKAGE_SHASUMS.sha256
+  zip_sidecar: HERMESOS_GENESIS_RC_v0.1.zip.sha256
+validation_evidence:
+  - evidence/CLEAN_INSTALL_VALIDATION.json
+  - evidence/disposable_validation_round_2.json
+  - evidence/full_disposable_14_phase_lifecycle_validation.json
+  - evidence/boot_probe_layout_reconciliation.json
+  - evidence/hkp_authority_layout_reconciliation.json
+known_discrepancy:
+  component: governance_status.py
+  classification: STALE_IMPLEMENTATION
+  disposition: KEEP_AS_IMPLEMENTATION_OVERLAY
+next_stage: CODEX_ENGINEERING_REVIEW

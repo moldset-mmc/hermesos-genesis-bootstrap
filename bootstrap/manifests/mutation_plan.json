@@ -1,0 +1,82 @@
+{
+  "schema": "hermesos.genesis.disposable-mutation-plan.v0.2",
+  "created_utc": "2026-07-11T21:59:31.928329+00:00",
+  "target": {
+    "runtime_path": "E:\\HKP_PROJECTS\\HERMESOS_GENESIS\\05_BOOTSTRAP_IMPLEMENTATION\\HERMESOS_GENESIS_BOOTSTRAP_IMPLEMENTATION_v0.1\\workspace\\clean-install-validation-v1\\runtime",
+    "exists": true,
+    "git": true,
+    "hermes_home": "E:\\HKP_PROJECTS\\HERMESOS_GENESIS\\05_BOOTSTRAP_IMPLEMENTATION\\HERMESOS_GENESIS_BOOTSTRAP_IMPLEMENTATION_v0.1\\workspace\\clean-install-validation-v1\\hermes-home",
+    "profile_root": "E:\\HKP_PROJECTS\\HERMESOS_GENESIS\\05_BOOTSTRAP_IMPLEMENTATION\\HERMESOS_GENESIS_BOOTSTRAP_IMPLEMENTATION_v0.1\\workspace\\clean-install-validation-v1\\hermes-home\\profiles",
+    "head": {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "returncode": 0,
+      "stdout": "cd124ad1fae574dcdab8124924f84201d65277da\n",
+      "stderr": ""
+    },
+    "status": {
+      "command": [
+        "git",
+        "status",
+        "--porcelain=v1"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "package_version": "0.18.0"
+  },
+  "files_modify": [
+    "agent/background_review.py",
+    "agent/credential_pool.py",
+    "agent/tool_dispatch_helpers.py",
+    "agent/tool_executor.py",
+    "cron/scheduler.py",
+    "gateway/delivery.py",
+    "gateway/platforms/api_server.py",
+    "gateway/run.py",
+    "plugins/platforms/telegram/adapter.py",
+    "tools/cronjob_tools.py",
+    "tools/delegate_tool.py",
+    "tools/file_tools.py",
+    "tools/memory_tool.py",
+    "tools/skill_manager_tool.py",
+    "tools/terminal_tool.py"
+  ],
+  "files_add": {
+    "agent": [
+      "approval_service.py",
+      "credential_broker.py",
+      "credential_broker_client.py",
+      "credential_broker_service.py",
+      "execution_context.py",
+      "hermes_core_startup.py",
+      "hkp_binding.py",
+      "hkp_enforcer.py",
+      "hkp_policy_gate.py",
+      "hkp_prompt_guard.py",
+      "tool_preflight.py"
+    ],
+    "gateway": [
+      "governance_status.py"
+    ],
+    "hkp": "hkp/hkp",
+    "boot_probe": "<HERMES_HOME>/scripts/hkp_boot_probe.py"
+  },
+  "overlay": {
+    "governance_status_integrity_manifest": {
+      "source_bundle_component": "03_NEW_RUNTIME_FILES/gateway/governance_status.py",
+      "classification": "STALE_IMPLEMENTATION",
+      "reason": "Component hardcodes legacy HKP-INT-004/v1.3 while owner-bound current authority root and boot probe use HKP-INT-006/v6.0.",
+      "correction_source": "runtime_corrections/gateway/governance_status.py",
+      "required_before_stage": true
+    }
+  },
+  "preflight_required": "PRE_APPLY_ATOMIC_PREFLIGHT=PASS",
+  "rollback": "snapshot-based deterministic restore; no git reset --hard for live",
+  "validation_contract": "docs/VALIDATION_CONTRACT_ALIGNMENT.md",
+  "live_apply_authorized": false
+}

@@ -1,0 +1,42 @@
+{
+  "schema": "hermesos.genesis.evidence.v0.1",
+  "phase": "FULL_DISPOSABLE_14_PHASE_LIFECYCLE_VALIDATION",
+  "target": "isolated reconstruction-adapted runtime and disposable-hermes-home only",
+  "live_runtime_modified": false,
+  "canonical_hkp_modified": false,
+  "source_bundle_modified": false,
+  "phases": [
+    {"phase": 0, "name": "DISCOVER_ENVIRONMENT", "result": "PASS", "evidence": "engine INSPECT"},
+    {"phase": 1, "name": "VERIFY_OFFICIAL_HERMES", "result": "PASS", "evidence": "clean detached commit cd124ad1fae574dcdab8124924f84201d65277da; pyproject version 0.18.0"},
+    {"phase": 2, "name": "RECEIVE_TRUSTED_GENESIS_PACKAGE", "result": "PASS", "evidence": "local immutable source path bound for disposable run"},
+    {"phase": 3, "name": "VERIFY_PACKAGE_INTEGRITY", "result": "PASS", "evidence": "49 SHA-256 records verified"},
+    {"phase": 4, "name": "CREATE_HERMESOS_PROFILE", "result": "PASS", "evidence": "profile provisioned only at disposable-hermes-home/profiles/hermesos"},
+    {"phase": 5, "name": "LOAD_IDENTITY", "result": "PASS", "evidence": "7 required identity/config artifacts staged and present"},
+    {"phase": 6, "name": "LOAD_HKP_GOVERNANCE", "result": "PASS_WITH_BOUNDARY", "evidence": "minimum corpus staged separately; owner-bound E:/HKP authority root bound read-only and not copied"},
+    {"phase": 7, "name": "START_HERMESOS", "result": "NOT_EXECUTABLE_IN_DISPOSABLE_MODE", "reason": "gateway/provider start requires production-only credentials and external Telegram connectivity; boot probe executed instead"},
+    {"phase": 8, "name": "INSPECT_SHARED_RUNTIME", "result": "PASS", "evidence": "clean baseline, status and patch applicability verified"},
+    {"phase": 9, "name": "PLAN_APPROVED_ADAPTATION", "result": "PASS_DISPOSABLE_ONLY", "evidence": "inspectable mutation plan generated; no live approval requested"},
+    {"phase": 10, "name": "APPLY_RUNTIME_ENFORCEMENT", "result": "PASS_DISPOSABLE_ONLY", "evidence": "patch -p0 applied; 21 custom files staged; governance-status overlay staged"},
+    {"phase": 11, "name": "RESTART_RELOAD", "result": "PARTIAL_PASS", "evidence": "boot probe successfully executed against read-only E:/HKP; gateway restart not executable without production credentials"},
+    {"phase": 12, "name": "VALIDATE", "result": "PARTIAL_PASS", "evidence": "syntax, imports, authority compatibility, boot probe, contract tests PASS; live permissions/isolation/external delivery not executable"},
+    {"phase": 13, "name": "PRODUCE_EVIDENCE", "result": "PASS", "evidence": "phase evidence, reconciliation records, discrepancy record and checksum manifest generated"},
+    {"phase": 14, "name": "DECLARE_READY", "result": "NOT_READY", "reason": "LIVE VERIFIED and ISOLATION VERIFIED have not been proven"}
+  ],
+  "validation": {
+    "boot_probe": "PASS: HKP GOVERNED / VERIFIED, HKP-INT-006",
+    "governance_authority_layout": "PASS after implementation-local overlay",
+    "bootstrap_contract_tests": "PASS: 3 passed",
+    "runtime_rollback": "PASS: final git status porcelain empty",
+    "boot_probe_rollback": "PASS: disposable HERMES_HOME/scripts/hkp_boot_probe.py absent after rollback",
+    "production_secrets": "NOT_EXECUTABLE_IN_DISPOSABLE_MODE; no values read or written",
+    "gateway_external_start": "NOT_EXECUTABLE_IN_DISPOSABLE_MODE",
+    "live_permission_matrix": "NOT_EXECUTABLE_IN_DISPOSABLE_MODE",
+    "subagent_isolation_live": "NOT_EXECUTABLE_IN_DISPOSABLE_MODE"
+  },
+  "discrepancies": [
+    "SOURCE_BUNDLE_CORRECTION_REQUIRED: governance_status.py stale v1.3/HKP-INT-004 expectation corrected by implementation overlay; disposition pending"
+  ],
+  "result": "PARTIAL_PASS",
+  "verification_level": "DISPOSABLE_VERIFIED",
+  "claims_prohibited": ["LIVE VERIFIED", "ISOLATION VERIFIED", "READY"]
+}

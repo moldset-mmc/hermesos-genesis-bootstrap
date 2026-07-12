@@ -1,0 +1,101 @@
+package:
+  name: HERMESOS_GENESIS_DESIGN_PACK
+  version: 0.1.0
+  status: DESIGN_DRAFT
+
+authority:
+  foundation_inherited: true
+  crosswalk_complete: true
+
+sources:
+  source_inventory: "01_SOURCE_INVENTORY/HERMESOS_SOURCE_INVENTORY_v0.1/"
+  foundation_crosswalk: "02_GAP_ANALYSIS/HERMESOS_GENESIS_FOUNDATION_CROSSWALK_v0.1/"
+  canonical_hkp_root: "E:\\HKP\\"
+
+documents:
+  - id: DP-00
+    file: 00_DESIGN_PACK_INDEX.md
+    purpose: Index and navigation
+    authority_class: ADMIN
+  - id: DP-01
+    file: 01_PRODUCT_DEFINITION.md
+    purpose: Product definition and scope
+    authority_class: NORMATIVE
+  - id: DP-02
+    file: 02_ARCHITECTURE_BASELINE.md
+    purpose: Target architecture layers
+    authority_class: NORMATIVE
+  - id: DP-03
+    file: 03_BOOTSTRAP_BOUNDARY_MODEL.md
+    purpose: Bootstrap authority boundaries
+    authority_class: NORMATIVE
+  - id: DP-04
+    file: 04_HERMESOS_IDENTITY_SPEC.md
+    purpose: Normative identity specification
+    authority_class: NORMATIVE
+  - id: DP-05
+    file: 05_HKP_DECISION_GATES_SPEC.md
+    purpose: 6 Decision Gates specification
+    authority_class: NORMATIVE
+  - id: DP-06
+    file: 06_RUNTIME_ENFORCEMENT_SPEC.md
+    purpose: Hard enforcement baseline
+    authority_class: NORMATIVE
+  - id: DP-07
+    file: 07_REGISTRY_EXTENSION_SPEC.md
+    purpose: Registry extension proposal
+    authority_class: PROPOSAL
+  - id: DP-08
+    file: 08_BOOTSTRAP_LIFECYCLE_SPEC.md
+    purpose: 14-phase bootstrap lifecycle
+    authority_class: NORMATIVE
+  - id: DP-09
+    file: 09_PORTABILITY_AND_PATH_MODEL.md
+    purpose: Portability and path parameterization
+    authority_class: NORMATIVE
+  - id: DP-10
+    file: 10_SECRETS_AND_TRUST_MODEL.md
+    purpose: Secrets and trust model
+    authority_class: NORMATIVE
+  - id: DP-11
+    file: 11_VALIDATION_AND_READINESS_SPEC.md
+    purpose: Validation and readiness criteria
+    authority_class: NORMATIVE
+  - id: DP-12
+    file: 12_UPSTREAM_COMPATIBILITY_MODEL.md
+    purpose: Upstream version compatibility
+    authority_class: NORMATIVE
+  - id: DP-13
+    file: 13_ADR_CANDIDATE_REGISTER.md
+    purpose: ADR candidates from crosswalk
+    authority_class: PROPOSAL
+  - id: DP-14
+    file: 14_OPEN_GAPS_AND_DEFERRED_SCOPE.md
+    purpose: Known gaps and deferred items
+    authority_class: REFERENCE
+  - id: DP-15
+    file: 15_RELEASE_CRITERIA.md
+    purpose: Release stage gates
+    authority_class: NORMATIVE
+
+adr_candidates:
+  - ADR-01: Decision Gates Elevation
+  - ADR-02: Registry Extension
+  - ADR-03: Bootstrap vs Runtime Patching
+  - ADR-04: Hermes Core vs Multi-Profile
+  - ADR-05: Operating Cycle Implementation
+  - ADR-06: Knowledge DNA Implementation
+  - ADR-07: Constitution Injection
+  - ADR-08: ADR Registry in Runtime
+
+open_gaps:
+  - GAP-01: 9-Phase Operating Cycle (deferred)
+  - GAP-02: Machine-readable Registry (deferred)
+  - GAP-03: Knowledge DNA (deferred)
+  - GAP-04: Full Gates enforcement (partial)
+  - GAP-05: Full 12-stage Bootstrap (deferred)
+  - GAP-06: Constitution injection (proposed)
+  - GAP-07: Identity migration (deferred)
+  - GAP-08: ADR registry (deferred)
+
+next_stage: HERMESOS_GENESIS_SOURCE_BUNDLE_v0.1
