@@ -1,0 +1,2 @@
+# Preserve sealed source-bundle bytes exactly; their manifests bind file hashes.
+* -text
