@@ -22,6 +22,8 @@ jobs:
         run: python -m py_compile scripts/release.py scripts/clean_install.py bootstrap/bootstrap_engine/genesis_bootstrap_v2.py bootstrap/bootstrap_engine/genesis_bootstrap.py
       - name: Run tests
         run: python -m pytest tests -q
+      - name: Remove generated test state
+        run: rm -rf .pytest_cache scripts/__pycache__ bootstrap/bootstrap_engine/__pycache__ tests/__pycache__ tests/bootstrap/__pycache__
       - name: Build deterministic release artifact
         run: python scripts/release.py build --out dist --version 0.2
       - name: Verify release package and checksums
